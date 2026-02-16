@@ -13,16 +13,27 @@ if [ "$ENV" != "dev" ] && [ "$ENV" != "prod" ]; then
   exit 1
 fi
 
+echo "WARNING: This will destroy the entire $ENV environment!"
+echo "This includes:"
+echo "  - IAM SSM Access"
+echo "  - Load Balancer"
+echo "  - EC2 Instances"
+echo "  - RDS Aurora Database (all data will be lost)"
+echo "  - VPC and Network resources"
+echo ""
+read -p "Are you sure you want to destroy $ENV? (type 'yes' to confirm): " CONFIRM
+
+if [ "$CONFIRM" != "yes" ]; then
+  echo "Destroy cancelled."
+  exit 0
+fi
+
 echo "Destroying $ENV environment..."
 
-terraform -chdir=05-iam-ssm-access destroy -var-file=$ENV.tfvars -auto-approve
-
-terraform -chdir=04-load-balancer destroy -var-file=$ENV.tfvars -auto-approve
-
-terraform -chdir=03-app-ec2-v1 destroy -var-file=$ENV.tfvars -auto-approve
-
-terraform -chdir=02-db destroy -var-file=$ENV.tfvars -auto-approve
-
-terraform -chdir=01-network destroy -var-file=$ENV.tfvars -auto-approve
+terraform -chdir=05-iam-ssm-access destroy -var-file=$ENV.tfvars
+terraform -chdir=04-load-balancer destroy -var-file=$ENV.tfvars
+terraform -chdir=03-app-ec2-v1 destroy -var-file=$ENV.tfvars
+terraform -chdir=02-db destroy -var-file=$ENV.tfvars
+terraform -chdir=01-network destroy -var-file=$ENV.tfvars
 
 echo "$ENV environment destroyed successfully!"
