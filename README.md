@@ -104,7 +104,7 @@ cd ..
 cd 04-load-balancer
 terraform init -backend-config="key=dev/load-balancer/terraform.tfstate"
 terraform plan -var-file=dev.tfvars
-terraform apply -var-file=dev.tfvars
+terraform apply -var-file=dev.tfvars -auto-approve
 cd ..
 ```
 
@@ -172,7 +172,7 @@ sudo systemctl restart api
 
 # 4. Verify service is running
 sudo systemctl status api
-curl http://localhost:8080
+curl http://localhost:8080/greeting?name=Tony
 ```
 
 ### Managing SSM Access
@@ -185,7 +185,7 @@ aws iam add-user-to-group \
 ```
 
 **Update allowed IPs:**
-Edit `06-iam-ssm-access/dev.tfvars`:
+Edit `05-iam-ssm-access/dev.tfvars`:
 ```hcl
 allowed_source_ips = [
   "70.181.86.188/32",
