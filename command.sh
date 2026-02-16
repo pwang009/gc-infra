@@ -18,9 +18,6 @@ keyPairName=gconnex-ec2
 aws ec2 create-key-pair --key-name ${keyPairName} --query 'KeyMaterial' --output text > ${keyPairName}.pem
 
 
-
-
-
 ## shut down everything 
 # 5. IAM SSM Access (free, but clean up)
 cd 05-iam-ssm-access
