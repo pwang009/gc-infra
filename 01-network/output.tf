@@ -14,6 +14,10 @@ output "public_subnets" {
   value = module.vpc.public_subnets
 }
 
+output "database_subnets" {
+  value = module.vpc.database_subnets
+}
+
 output "s3_vpc_endpoint_id" {
   value = aws_vpc_endpoint.s3.id
 }

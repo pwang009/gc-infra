@@ -11,7 +11,7 @@
     - 2 ec2 to start with
     - ec2 are within a asg
 4. rds
-    - Auroua SQL in private subnet (see README.md for access)
+    - Auroua mySQL in private subnet (see README.md for access)
     - use Auroua proxy
 
 5. load balancer
@@ -86,7 +86,7 @@ cd ..
 cd 02-db
 terraform init -backend-config="key=dev/db/terraform.tfstate"
 terraform plan -var-file=dev.tfvars
-terraform apply -var-file=dev.tfvars
+terraform apply -var-file=dev.tfvars -auto-approve
 cd ..
 ```
 
@@ -173,6 +173,9 @@ sudo systemctl restart api
 # 4. Verify service is running
 sudo systemctl status api
 curl http://localhost:8080/greeting?name=Tony
+
+# 5. verify database
+mysql -h dev-aurora-cluster.cluster-cdqmgwiqilow.us-west-1.rds.amazonaws.com       -u admin       -p       appdb
 ```
 
 ### Managing SSM Access

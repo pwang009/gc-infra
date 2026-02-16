@@ -10,6 +10,9 @@ yum install -y java-21-amazon-corretto-headless
 # Install CloudWatch agent for logging
 yum install -y amazon-cloudwatch-agent
 
+# Install MySQL client
+yum install -y mariadb105
+
 # Create app directory
 mkdir -p /opt/app
 chown ec2-user:ec2-user /opt/app
