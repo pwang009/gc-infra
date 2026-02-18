@@ -52,80 +52,6 @@ Download and install from: https://s3.amazonaws.com/session-manager-downloads/pl
 ```bash
 session-manager-plugin
 ```
-
-**Create S3 bucket for Terraform state (one-time setup):****
-```bash
-bucketName=gc-terraform-state-c8f7ewhysy5a
-aws s3 mb s3://${bucketName} 
-aws s3api put-bucket-versioning --bucket ${bucketName} --versioning-configuration Status=Enabled
-
-aws s3api put-bucket-encryption --bucket ${bucketName} \
-  --server-side-encryption-configuration '{
-    "Rules": [{ "ApplyServerSideEncryptionByDefault": { "SSEAlgorithm": "AES256" } }]
-  }'
-```
-
-
-## Deployment by Environment
-
-### Dev Environment
-
-Deploy in this order:
-
-**1. Network (VPC, Subnets, Bastion)**
-```bash
-cd 01-network
-terraform init -backend-config="key=dev/network/terraform.tfstate"
-terraform plan -var-file=dev.tfvars
-terraform apply -var-file=dev.tfvars -auto-approve
-cd ..
-```
-
-**2. Database (RDS Aurora)**
-```bash
-cd 02-db
-terraform init -backend-config="key=dev/db/terraform.tfstate"
-terraform plan -var-file=dev.tfvars
-terraform apply -var-file=dev.tfvars -auto-approve
-cd ..
-```
-
-**3. Application (EC2 Instances)**
-```bash
-cd 03-app-ec2-v1
-terraform init -backend-config="key=dev/app-ec2/terraform.tfstate"
-terraform plan -var-file=dev.tfvars
-terraform apply -var-file=dev.tfvars -auto-approve
-cd ..
-```
-
-**4. Load Balancer (ALB)**
-```bash
-cd 04-load-balancer
-terraform init -backend-config="key=dev/load-balancer/terraform.tfstate"
-terraform plan -var-file=dev.tfvars
-terraform apply -var-file=dev.tfvars -auto-approve
-cd ..
-```
-
-**5. IAM SSM Access Control**
-```bash
-cd 05-iam-ssm-access
-terraform init -backend-config="key=dev/iam-ssm-access/terraform.tfstate"
-terraform plan -var-file=dev.tfvars
-terraform apply -var-file=dev.tfvars -auto-approve
-cd ..
-```
-
-**6. EKS Cluster (Optional)**
-```bash
-cd 06-app-eks-v2
-terraform init -backend-config="key=dev/app-eks/terraform.tfstate"
-terraform plan -var-file=dev.tfvars
-terraform apply -var-file=dev.tfvars
-cd ..
-```
-
 ## Accessing EC2 Instances
 
 ### Via SSM Session Manager
@@ -141,7 +67,7 @@ aws ec2 describe-instances \
 **Connect to instance:**
 ```bash
 instanceID=$(aws ec2 describe-instances \
-  --filters "Name=tag:Environment,Values=dev" "Name=instance-state-name,Values=running" \
+  --filters "Name=tag:Environment,Values=prod" "Name=instance-state-name,Values=running" \
   --query 'Reservations[].Instances[0].InstanceId' \
   --output text)
 aws ssm start-session --target ${instanceID}
@@ -175,7 +101,7 @@ sudo systemctl status api
 curl http://localhost:8080/greeting?name=Tony
 
 # 5. verify database
-mysql -h dev-aurora-cluster.cluster-cdqmgwiqilow.us-west-1.rds.amazonaws.com       -u admin       -p       appdb
+mysql -h prod-aurora-cluster.cluster-cdqmgwiqilow.us-west-1.rds.amazonaws.com       -u admin       -p       appdb
 ```
 
 ### Managing SSM Access
@@ -200,63 +126,5 @@ Then apply:
 ```bash
 cd 06-iam-ssm-access
 terraform apply -var-file=dev.tfvars -auto-approve
-cd ..
-```
-
-### Prod Environment
-
-Deploy in this order:
-
-**1. Network (VPC, Subnets, Bastion)**
-```bash
-cd 01-network
-terraform init -backend-config="key=prod/network/terraform.tfstate"
-terraform plan -var-file=prod.tfvars
-terraform apply -var-file=prod.tfvars
-cd ..
-```
-
-**2. Database (RDS Aurora)**
-```bash
-cd 02-db
-terraform init -backend-config="key=prod/db/terraform.tfstate"
-terraform plan -var-file=prod.tfvars
-terraform apply -var-file=prod.tfvars
-cd ..
-```
-
-**3. Application (EC2 Instances)**
-```bash
-cd 03-app-ec2-v1
-terraform init -backend-config="key=prod/app-ec2/terraform.tfstate"
-terraform plan -var-file=prod.tfvars
-terraform apply -var-file=prod.tfvars
-cd ..
-```
-
-**4. Load Balancer (ALB)**
-```bash
-cd 04-load-balancer
-terraform init -backend-config="key=prod/load-balancer/terraform.tfstate"
-terraform plan -var-file=prod.tfvars
-terraform apply -var-file=prod.tfvars
-cd ..
-```
-
-**5. IAM SSM Access Control**
-```bash
-cd 06-iam-ssm-access
-terraform init -backend-config="key=prod/iam-ssm-access/terraform.tfstate"
-terraform plan -var-file=prod.tfvars
-terraform apply -var-file=prod.tfvars
-cd ..
-```
-
-**6. EKS Cluster (Optional)**
-```bash
-cd 05-app-eks-v2
-terraform init -backend-config="key=prod/app-eks/terraform.tfstate"
-terraform plan -var-file=prod.tfvars
-terraform apply -var-file=prod.tfvars
 cd ..
 ```

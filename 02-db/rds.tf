@@ -1,6 +1,11 @@
+locals {
+  serverless_mode = var.aurora_mode == "serverless"
+}
+
 resource "aws_rds_cluster" "aurora" {
   cluster_identifier              = "${var.environment}-aurora-cluster"
   engine                          = "aurora-mysql"
+  engine_mode                     = "provisioned"
   engine_version                  = "8.0.mysql_aurora.3.04.4"
   database_name                   = var.db_name
   master_username                 = var.db_username
@@ -13,7 +18,15 @@ resource "aws_rds_cluster" "aurora" {
   enabled_cloudwatch_logs_exports = ["error", "general", "slowquery"]
   skip_final_snapshot             = var.environment == "dev" ? true : false
   final_snapshot_identifier       = var.environment == "dev" ? null : "${var.environment}-aurora-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
-  deletion_protection             = var.environment == "prod" ? true : false
+  deletion_protection             = false
+
+  dynamic "serverlessv2_scaling_configuration" {
+    for_each = local.serverless_mode ? [1] : []
+    content {
+      min_capacity = var.serverless_min_capacity
+      max_capacity = var.serverless_max_capacity
+    }
+  }
 
   tags = {
     Name        = "${var.environment}-aurora-cluster"
@@ -30,11 +43,9 @@ resource "aws_rds_cluster_instance" "aurora_instances" {
   count              = var.instance_count
   identifier         = "${var.environment}-aurora-instance-${count.index + 1}"
   cluster_identifier = aws_rds_cluster.aurora.id
-  instance_class     = var.instance_class
+  instance_class     = local.serverless_mode ? "db.serverless" : var.instance_class
   engine             = aws_rds_cluster.aurora.engine
   engine_version     = aws_rds_cluster.aurora.engine_version
-
-  performance_insights_enabled = var.environment == "prod" ? true : false
 
   tags = {
     Name        = "${var.environment}-aurora-instance-${count.index + 1}"

@@ -55,7 +55,7 @@ After=network.target
 Type=simple
 User=ec2-user
 WorkingDirectory=/opt/app
-ExecStart=/usr/bin/java -jar /opt/app/app.jar
+ExecStart=/usr/bin/java -jar /opt/app/app.jar --server.servlet.context-path=/v1
 Restart=always
 RestartSec=10
 StandardOutput=append:/var/log/app.log

@@ -2,6 +2,7 @@
 set -e
 
 ENV=$1
+LOCK_FILE="/tmp/terraform-destroy-${ENV}.lock"
 
 if [ -z "$ENV" ]; then
   echo "Usage: ./destroy.sh <dev|prod>"
@@ -12,6 +13,17 @@ if [ "$ENV" != "dev" ] && [ "$ENV" != "prod" ]; then
   echo "Error: Environment must be 'dev' or 'prod'"
   exit 1
 fi
+
+# Check for lock file
+if [ -f "$LOCK_FILE" ]; then
+  echo "Error: Another destroy operation for $ENV is already running."
+  echo "If this is incorrect, remove: $LOCK_FILE"
+  exit 1
+fi
+
+# Create lock file
+echo $$ > "$LOCK_FILE"
+trap "rm -f $LOCK_FILE" EXIT
 
 echo "WARNING: This will destroy the entire $ENV environment!"
 echo "This includes:"

@@ -24,14 +24,6 @@ aws s3 cp target/app.jar s3://${bucketName}$/dev/app.jar
 # For prod environment
 aws s3 cp target/app.jar s3://gc-app-deployments/prod/app.jar
 ```
-
-Then deploy the infrastructure:
-```bash
-terraform init -backend-config="key=dev/app-ec2/terraform.tfstate"
-terraform plan -var-file=dev.tfvars
-terraform apply -var-file=dev.tfvars
-```
-
 ### Updating the Application
 
 **Option 1: Rolling Update (Recommended)**
