@@ -68,17 +68,21 @@ aws ec2 describe-instances \
 ```bash
 instanceID=$(aws ec2 describe-instances \
   --filters "Name=tag:Environment,Values=prod" "Name=instance-state-name,Values=running" \
-  --query 'Reservations[].Instances[0].InstanceId' \
+  --query 'Reservations[].Instances[0].InstanceId | [0]' \
   --output text)
 aws ssm start-session --target ${instanceID}
 ```
 
-**Port forwarding (for debugging):**
+**Port forwarding (for database):**
 ```bash
 aws ssm start-session \
-  --target i-xxxxxxxxxxxxxxxxx \
-  --document-name AWS-StartPortForwardingSession \
-  --parameters "portNumber=8080,localPortNumber=8080"
+  --target ${instanceID} \
+  --document-name AWS-StartPortForwardingSessionToRemoteHost \
+  --parameters '{
+    "host":["prod-aurora-cluster.cluster-cdqmgwiqilow.us-west-1.rds.amazonaws.com"],
+    "portNumber":["3306"],
+    "localPortNumber":["3306"]
+  }'
 ```
 
 ### Deploying Application JAR
