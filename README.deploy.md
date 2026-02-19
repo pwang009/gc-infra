@@ -96,6 +96,7 @@ cd ..
 **3. Application (EC2 Instances)**
 ```bash
 cd 03-app-ec2-v1
+terraform init -reconfigure -backend-config="key=${ENV}/app-ec2/terraform.tfstate"
 terraform init -backend-config="key=${ENV}/app-ec2/terraform.tfstate"
 terraform plan -var-file=${ENV}.tfvars
 terraform apply -var-file=${ENV}.tfvars -auto-approve
