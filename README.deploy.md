@@ -66,6 +66,12 @@ set environment variable to 'dev'
 export ENV=dev
 ## export ENV=prod
 ```  
+when switching from dev to prod, or the other way, run terraform init first and plan
+```bash
+ terraform init -reconfigure -backend-config="key=${ENV}/network/terraform.tfstate"
+ ```
+
+
 Deploy in this order:
 
 **1. Network (VPC, Subnets, Bastion)**
@@ -80,6 +86,7 @@ cd ..
 **2. Database (RDS Aurora)**
 ```bash
 cd 02-db
+# terraform init -reconfigure -backend-config="key=${ENV}/app-ec2/terraform.tfstate"
 terraform init -backend-config="key=${ENV}/db/terraform.tfstate"
 terraform plan -var-file=${ENV}.tfvars
 terraform apply -var-file=${ENV}.tfvars -auto-approve

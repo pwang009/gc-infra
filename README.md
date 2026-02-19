@@ -67,7 +67,7 @@ aws ec2 describe-instances \
 **Connect to instance:**
 ```bash
 instanceID=$(aws ec2 describe-instances \
-  --filters "Name=tag:Environment,Values=prod" "Name=instance-state-name,Values=running" \
+  --filters "Name=tag:Environment,Values=${ENV}" "Name=instance-state-name,Values=running" \
   --query 'Reservations[].Instances[0].InstanceId | [0]' \
   --output text)
 aws ssm start-session --target ${instanceID}
@@ -105,7 +105,7 @@ sudo systemctl status api
 curl http://localhost:8080/greeting?name=Tony
 
 # 5. verify database
-mysql -h prod-aurora-cluster.cluster-cdqmgwiqilow.us-west-1.rds.amazonaws.com       -u admin       -p       appdb
+mysql -h prod-aurora-cluster.cluster-cdqmgwiqilow.us-west-1.rds.amazonaws.com -u admin -p appdb
 ```
 
 ### Managing SSM Access
