@@ -1,3 +1,31 @@
+
+## Beanstalk v2 (gc-api) Deployment (prod only)
+
+1. Deploy 01-network for prod:
+  ```
+  cd 01-network
+  terraform init -backend-config="key=prod/network/terraform.tfstate"
+  terraform apply -var-file=prod.tfvars
+  ```
+
+2. Deploy 03-app-ebs-v2 for prod:
+  ```
+  cd ../03-app-ebs-v2
+  terraform init -backend-config="key=prod/app-ebs-v2/terraform.tfstate"
+  terraform apply -var-file=prod.tfvars \
+    -var="aws_region=us-west-1" \
+    -var="alb_sg_id=$(terraform -chdir=../04-load-balancer output -raw alb_sg_id)"
+  ```
+
+3. Deploy 04-load-balancer for prod (after 03-app-ebs-v2):
+  ```
+  cd ../04-load-balancer
+  terraform init -backend-config="key=prod/load-balancer/terraform.tfstate"
+  terraform apply -var-file=prod.tfvars
+  ```
+
+* The ALB will route /v2/* traffic to the Beanstalk gc-api environment (v2 target group).
+* The Beanstalk environment is private, only accessible via the ALB.
 # Deployment Guide
 
 ## Deploy Infrastructure
@@ -68,7 +96,7 @@ export ENV=dev
 ```  
 when switching from dev to prod, or the other way, run terraform init first and plan
 ```bash
- terraform init -reconfigure -backend-config="key=${ENV}/network/terraform.tfstate"
+
  ```
 
 

@@ -13,6 +13,25 @@ aws s3api put-bucket-encryption \
     }]
   }'
 
+aws s3api create-bucket \
+  --bucket gc-alb-access-logs \
+  --region us-west-1 \
+  --create-bucket-configuration LocationConstraint=us-west-1
+  
+aws s3api put-bucket-versioning \
+--bucket gc-alb-access-logs \
+--versioning-configuration Status=Enabled
+
+aws s3api put-bucket-encryption \
+  --bucket gc-alb-access-logs \
+  --server-side-encryption-configuration '{
+    "Rules": [{
+      "ApplyServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+      }
+    }]
+  }'
+
 ## create a key pair
 keyPairName=gconnex-ec2
 aws ec2 create-key-pair --key-name ${keyPairName} --query 'KeyMaterial' --output text > ${keyPairName}.pem

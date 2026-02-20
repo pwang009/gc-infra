@@ -13,12 +13,24 @@ output "alb_zone_id" {
   value       = aws_lb.app.zone_id
 }
 
+
 output "target_group_arn" {
-  description = "ARN of the target group"
+  description = "ARN of the v1 target group"
   value       = aws_lb_target_group.app_v1.arn
 }
 
-output "alb_url" {
-  description = "URL to access the application"
+output "target_group_v2_arn" {
+  description = "ARN of the v2 target group"
+  value       = aws_lb_target_group.app_v2.arn
+}
+
+
+output "alb_url_v1" {
+  description = "URL to access the v1 application"
   value       = "http://${aws_lb.app.dns_name}/v1"
+}
+
+output "alb_url_v2" {
+  description = "URL to access the v2 application"
+  value       = "http://${aws_lb.app.dns_name}/v2"
 }
