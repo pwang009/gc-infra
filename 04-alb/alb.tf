@@ -115,6 +115,11 @@ resource "aws_lb_listener_rule" "v2_path" {
   }
 }
 
+# Attach Beanstalk ASG to v1 target group
+resource "aws_autoscaling_attachment" "app_v1" {
+  autoscaling_group_name = data.terraform_remote_state.app_ebs_v1.outputs.beanstalk_asg_name
+  lb_target_group_arn    = aws_lb_target_group.app_v1.arn
+}
 
 # Attach Beanstalk ASG to v2 target group
 resource "aws_autoscaling_attachment" "app_v2" {

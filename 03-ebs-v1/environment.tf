@@ -1,12 +1,17 @@
 resource "aws_elastic_beanstalk_environment" "gc_api_prod" {
   name                = "gc-api-prod"
   application         = aws_elastic_beanstalk_application.gc_api.name
-  solution_stack_name = "64bit Amazon Linux 2023 v6.0.0 running Corretto 21"
+  platform_arn = "arn:aws:elasticbeanstalk:us-west-1::platform/Corretto 21 running on 64bit Amazon Linux 2023/4.8.4"
 
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
     name      = "InstanceType"
     value     = var.instance_type
+  }
+  setting {
+    namespace = "aws:autoscaling:launchconfiguration"
+    name      = "IamInstanceProfile"
+    value     = aws_iam_instance_profile.eb_ec2_profile.name
   }
   setting {
     namespace = "aws:autoscaling:asg"
@@ -19,27 +24,22 @@ resource "aws_elastic_beanstalk_environment" "gc_api_prod" {
     value     = var.max_size
   }
   setting {
-    namespace = "aws:autoscaling:asg"
-    name      = "DesiredCapacity"
-    value     = var.desired_capacity
-  }
-  setting {
     namespace = "aws:ec2:vpc"
     name      = "VPCId"
-    value     = module.network.vpc_id
+    value     = data.terraform_remote_state.network.outputs.vpc_id
   }
   setting {
     namespace = "aws:ec2:vpc"
     name      = "Subnets"
-    value     = join(",", module.network.private_subnets)
+    value     = join(",", data.terraform_remote_state.network.outputs.private_subnets)
   }
   setting {
     namespace = "aws:ec2:vpc"
     name      = "ELBSubnets"
-    value     = join(",", module.network.public_subnets)
+    value     = join(",", data.terraform_remote_state.network.outputs.public_subnets)
   }
   setting {
-    namespace = "aws:ec2:vpc"
+    namespace = "aws:autoscaling:launchconfiguration"
     name      = "SecurityGroups"
     value     = aws_security_group.beanstalk.id
   }
@@ -48,10 +48,32 @@ resource "aws_elastic_beanstalk_environment" "gc_api_prod" {
     name      = "LoadBalancerType"
     value     = "application"
   }
+  # aws acm request-certificate --domain-name api.abc.com --validation-method DNS --region us-west-1
+  # setting {
+  #   namespace = "aws:elbv2:listener:443"
+  #   name      = "ListenerEnabled"
+  #   value     = "true"
+  # }
+  # setting {
+  #   namespace = "aws:elbv2:listener:443"
+  #   name      = "Protocol"
+  #   value     = "HTTPS"
+  # }
+  # setting {
+  #   namespace = "aws:elbv2:listener:443"
+  #   name      = "SSLCertificateArns"
+  #   value     = "arn:aws:acm:us-west-1:681742558891:certificate/ccee43f2-22ed-4f9f-b3ee-3281367786b9"
+  # }
   setting {
     namespace = "aws:elasticbeanstalk:environment"
     name      = "EnvironmentType"
     value     = "LoadBalanced"
+  }
+    # Set PORT environment variable for Spring Boot
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name      = "PORT"
+    value     = "8080"
   }
 
   # CloudWatch log streaming
@@ -69,21 +91,6 @@ resource "aws_elastic_beanstalk_environment" "gc_api_prod" {
     namespace = "aws:elasticbeanstalk:cloudwatch:logs"
     name      = "RetentionInDays"
     value     = "14"
-  }
-  setting {
-    namespace = "aws:elasticbeanstalk:cloudwatch:logs:logfiles"
-    name      = "/var/log/web.stdout.log"
-    value     = "true"
-  }
-  setting {
-    namespace = "aws:elasticbeanstalk:cloudwatch:logs:logfiles"
-    name      = "/var/log/web.stderr.log"
-    value     = "true"
-  }
-  setting {
-    namespace = "aws:elasticbeanstalk:cloudwatch:logs:logfiles"
-    name      = "/var/log/eb-engine.log"
-    value     = "true"
   }
   tags = {
     Name = "gc-api-prod"

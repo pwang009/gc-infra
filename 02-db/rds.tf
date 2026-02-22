@@ -1,3 +1,17 @@
+resource "aws_cloudwatch_log_group" "aurora_error" {
+  name              = "/aws/rds/cluster/${aws_rds_cluster.aurora.cluster_identifier}/error"
+  retention_in_days = 14
+}
+
+resource "aws_cloudwatch_log_group" "aurora_general" {
+  name              = "/aws/rds/cluster/${aws_rds_cluster.aurora.cluster_identifier}/general"
+  retention_in_days = 14
+}
+
+resource "aws_cloudwatch_log_group" "aurora_slowquery" {
+  name              = "/aws/rds/cluster/${aws_rds_cluster.aurora.cluster_identifier}/slowquery"
+  retention_in_days = 14
+}
 locals {
   serverless_mode = var.aurora_mode == "serverless"
 }

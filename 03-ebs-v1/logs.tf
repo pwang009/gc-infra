@@ -1,7 +1,7 @@
 resource "aws_elastic_beanstalk_configuration_template" "gc_api_logs" {
   name                = "gc-api-logs-template"
   application         = aws_elastic_beanstalk_application.gc_api.name
-  solution_stack_name = "64bit Amazon Linux 2023 v6.0.0 running Corretto 21"
+  solution_stack_name = "64bit Amazon Linux 2023 v4.8.4 running Corretto 21"
 
   setting {
     namespace = "aws:elasticbeanstalk:cloudwatch:logs"
@@ -18,19 +18,5 @@ resource "aws_elastic_beanstalk_configuration_template" "gc_api_logs" {
     name      = "RetentionInDays"
     value     = "14"
   }
-  setting {
-    namespace = "aws:elasticbeanstalk:cloudwatch:logs:logfiles"
-    name      = "/var/log/web.stdout.log"
-    value     = "true"
-  }
-  setting {
-    namespace = "aws:elasticbeanstalk:cloudwatch:logs:logfiles"
-    name      = "/var/log/web.stderr.log"
-    value     = "true"
-  }
-  setting {
-    namespace = "aws:elasticbeanstalk:cloudwatch:logs:logfiles"
-    name      = "/var/log/eb-engine.log"
-    value     = "true"
-  }
+
 }

@@ -1,3 +1,41 @@
+# VPC Flow Logs to CloudWatch
+resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
+  name              = "/aws/vpc/flowlogs/${module.vpc.vpc_id}"
+  retention_in_days = 14
+}
+
+resource "aws_iam_role" "vpc_flow_logs" {
+  name = "${var.environment}-vpc-flow-logs-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "vpc-flow-logs.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "vpc_flow_logs" {
+  role       = aws_iam_role.vpc_flow_logs.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+}
+
+resource "aws_flow_log" "vpc" {
+  log_destination      = aws_cloudwatch_log_group.vpc_flow_logs.arn
+  log_destination_type = "cloud-watch-logs"
+  iam_role_arn         = aws_iam_role.vpc_flow_logs.arn
+  vpc_id               = module.vpc.vpc_id
+  traffic_type         = "ALL"
+  tags = {
+    Name        = "${var.environment}-vpc-flow-logs"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+  }
+}
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.5"

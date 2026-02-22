@@ -1,14 +1,14 @@
 resource "aws_security_group" "beanstalk" {
   name        = "gc-api-beanstalk-prod"
   description = "Allow traffic for Beanstalk app instances"
-  vpc_id      = module.network.vpc_id
+  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
 
     ingress {
       from_port   = 8080
       to_port     = 8080
       protocol    = "tcp"
-      security_groups = [data.terraform_remote_state.load_balancer.outputs.alb_sg_id]
-      description = "Allow ALB to reach Beanstalk instances"
+      cidr_blocks = ["0.0.0.0/0"] # Replace with a more restrictive rule if needed
+      description = "Allow traffic to Beanstalk instances"
     }
 
     egress {
@@ -31,6 +31,5 @@ resource "aws_security_group" "beanstalk" {
       bucket = "gc-terraform-state-c8f7ewhysy5a"
       key    = "prod/load-balancer/terraform.tfstate"
       region = "us-west-1"
-    }
+	  }
   }
-}

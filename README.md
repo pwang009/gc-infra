@@ -1,4 +1,4 @@
-# PROJECT
+# PROJECT GC PRODUCTION STACK
 
 ## Requirement
 
@@ -7,15 +7,16 @@
     - 2 public subnet
     - 2 private subnet (ec2)   
     - 2 private subnet (rds)
-3. EC2
-    - 2 ec2 to start with
-    - ec2 are within a asg
+3. elastic beanstalk (ebs)
+    - 2 beanstalk (ebs) instances to start with, min/max/desired is 2/6/2
+    - ebs instances are within asg
+    - size of prod ebs is t3.small, size of dev is t3.micro
 4. rds
     - Auroua mySQL in private subnet (see README.md for access)
-    - use Auroua proxy
 
 5. load balancer
-    - pointing v1 to ec2 based api, like api.abc.com/vi
+    - pointing v1 to ebs based api, like api.abc.com/vi
+    - store access log to s3 bucket
 
 6. Terraform
     - use terraform to build infrastructure
@@ -32,7 +33,7 @@ dig +short myip.opendns.com @resolver1.opendns.com
 
 ## Prerequisites
 
-**Install AWS Session Manager Plugin:**
+**Install AWS Session Manager Plugin: if EC2 is used**
 
 *macOS:*
 ```bash
