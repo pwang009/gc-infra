@@ -27,3 +27,9 @@ variable "environment" {
   description = "Deployment environment (dev, prod)"
   type        = string
 }
+
+variable "app_port" {
+  description = "Port for the Spring Boot application"
+  type        = number
+  default     = 8080
+}

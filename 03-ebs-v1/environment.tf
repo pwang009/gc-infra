@@ -73,7 +73,7 @@ resource "aws_elastic_beanstalk_environment" "gc_api_prod" {
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
     name      = "PORT"
-    value     = "8080"
+    value     = var.app_port
   }
 
   # CloudWatch log streaming
