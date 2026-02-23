@@ -33,3 +33,8 @@ variable "app_port" {
   type        = number
   default     = 8080
 }
+
+variable "ssl_certificate_arn" {
+  description = "ARN of the SSL certificate for HTTPS"
+  type        = string
+}

@@ -73,7 +73,7 @@ resource "aws_elastic_beanstalk_environment" "gc_api_prod" {
   setting {
     namespace = "aws:elbv2:listener:443"
     name      = "SSLCertificateArns"
-    value     = "arn:aws:acm:us-west-1:681742558891:certificate/1a5f7711-83aa-443f-a24b-cfb089986635"
+    value     = var.ssl_certificate_arn
   }
   setting {
     namespace = "aws:elasticbeanstalk:environment"
@@ -106,6 +106,15 @@ resource "aws_elastic_beanstalk_environment" "gc_api_prod" {
   tags = {
     Name = "gc-api-prod"
     Environment = "prod"
+  }
+}
+
+# Enable ALB access logs via CLI since EB settings don't support it
+resource "null_resource" "enable_alb_access_logs" {
+  depends_on = [aws_elastic_beanstalk_environment.gc_api_prod, aws_s3_bucket.alb_access_logs]
+
+  provisioner "local-exec" {
+    command = "aws elbv2 modify-load-balancer-attributes --load-balancer-arn ${aws_elastic_beanstalk_environment.gc_api_prod.load_balancers[0]} --attributes Key=access_logs.s3.enabled,Value=true Key=access_logs.s3.bucket,Value=${aws_s3_bucket.alb_access_logs.bucket}"
   }
 }
 
