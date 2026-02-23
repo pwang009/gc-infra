@@ -49,4 +49,14 @@ data "aws_iam_policy_document" "alb_access_logs_policy" {
       values   = ["bucket-owner-full-control"]
     }
   }
+  statement {
+    sid    = "AWSFirehoseLoggingPermissions"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["firehose.amazonaws.com"]
+    }
+    actions   = ["s3:PutObject"]
+    resources = ["${aws_s3_bucket.alb_access_logs.arn}/*"]
+  }
 }
