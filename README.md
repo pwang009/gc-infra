@@ -65,17 +65,17 @@ aws ec2 describe-instances \
   --output table
 ```
 
-**Connect to instance:**
+**Connect to instance & database**
 ```bash
-instanceID=$(aws ec2 describe-instances \
+# Connect to bastion instance in prod environment
+ENV=prod
+instance_id=$(aws ec2 describe-instances \
   --filters "Name=tag:Environment,Values=${ENV}" "Name=instance-state-name,Values=running" \
   --query 'Reservations[].Instances[0].InstanceId | [0]' \
   --output text)
 aws ssm start-session --target ${instance_id}
-```
 
-**Port forwarding (for database):**
-```bash
+# Port forwarding (for rds database)
 aws ssm start-session \
   --target ${instance_id} \
   --document-name AWS-StartPortForwardingSessionToRemoteHost \
