@@ -44,7 +44,7 @@ echo "Destroying $ENV environment..."
 
 terraform -chdir=05-iam-ssm-access destroy -var-file=$ENV.tfvars
 terraform -chdir=04-load-balancer destroy -var-file=$ENV.tfvars
-terraform -chdir=03-app-ec2-v1 destroy -var-file=$ENV.tfvars
+terraform -chdir=03-ec2-v2 destroy -var-file=$ENV.tfvars
 terraform -chdir=02-db destroy -var-file=$ENV.tfvars
 terraform -chdir=01-network destroy -var-file=$ENV.tfvars
 
