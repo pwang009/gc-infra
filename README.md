@@ -60,7 +60,7 @@ session-manager-plugin
 **List instances:**
 ```bash
 aws ec2 describe-instances \
-  --filters "Name=tag:Environment,Values=dev" "Name=instance-state-name,Values=running" \
+  --filters "Name=tag:Environment,Values=prod" "Name=instance-state-name,Values=running" \
   --query 'Reservations[].Instances[].[InstanceId,Tags[?Key==`Name`].Value|[0],PrivateIpAddress]' \
   --output table
 ```
