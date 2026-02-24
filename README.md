@@ -46,7 +46,7 @@ curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64
 sudo dpkg -i session-manager-plugin.deb
 ```
 
-*Windows:*
+*Windows:*dig +short myip.opendns.com @resolver1.opendns.comdig +short myip.opendns.com @resolver1.opendns.com
 Download and install from: https://s3.amazonaws.com/session-manager-downloads/plugin/latest/windows/SessionManagerPluginSetup.exe
 
 **Verify installation:**
