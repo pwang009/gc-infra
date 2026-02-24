@@ -12,7 +12,7 @@ resource "aws_instance" "bastion" {
   user_data_base64 = base64encode(file("${path.module}/user_data.sh"))
 
   tags = {
-    Name        = "gc-${var.environment}-bastion"
+    Name        = "gc-bastion-${var.environment}"
     Environment = var.environment
     ManagedBy   = "terraform"
   }
@@ -21,7 +21,7 @@ resource "aws_instance" "bastion" {
     volume_size = 20
     volume_type = "gp3"
     tags = {
-      Name        = "gc-${var.environment}-bastion-volume"
+      Name        = "gc-bastion-${var.environment}-volume"
       Environment = var.environment
       ManagedBy   = "terraform"
     }
