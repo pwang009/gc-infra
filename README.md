@@ -117,7 +117,7 @@ aws iam add-user-to-group \
 ```
 
 **Update allowed IPs:**
-Edit `05-iam-ssm-access/dev.tfvars`:
+Edit `05-ssm-access/dev.tfvars`:
 ```hcl
 allowed_source_ips = [
   "70.181.86.188/32",
@@ -127,7 +127,7 @@ allowed_source_ips = [
 
 Then apply:
 ```bash
-cd 06-iam-ssm-access
+cd 05-ssm-access
 terraform apply -var-file=dev.tfvars -auto-approve
 cd ..
 ```

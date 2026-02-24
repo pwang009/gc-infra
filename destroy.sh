@@ -27,9 +27,10 @@ trap "rm -f $LOCK_FILE" EXIT
 
 echo "WARNING: This will destroy the entire $ENV environment!"
 echo "This includes:"
-echo "  - IAM SSM Access"
-echo "  - Load Balancer"
-echo "  - EC2 Instances"
+echo "  - SSM Access IAM resources"
+echo "  - Application Load Balancer"
+echo "  - Elastic Beanstalk application"
+echo "  - Bastion EC2 instance"
 echo "  - RDS Aurora Database (all data will be lost)"
 echo "  - VPC and Network resources"
 echo ""
@@ -42,10 +43,11 @@ fi
 
 echo "Destroying $ENV environment..."
 
-terraform -chdir=05-iam-ssm-access destroy -var-file=$ENV.tfvars
-terraform -chdir=04-load-balancer destroy -var-file=$ENV.tfvars
-terraform -chdir=03-ec2-v2 destroy -var-file=$ENV.tfvars
-terraform -chdir=02-db destroy -var-file=$ENV.tfvars
-terraform -chdir=01-network destroy -var-file=$ENV.tfvars
+terraform -chdir=05-ssm-access destroy -var-file=$ENV.tfvars -auto-approve
+terraform -chdir=04-alb destroy -var-file=$ENV.tfvars -auto-approve
+terraform -chdir=03-ebs-v1 destroy -var-file=$ENV.tfvars -auto-approve
+terraform -chdir=03-bastion destroy -var-file=$ENV.tfvars -auto-approve
+terraform -chdir=02-db destroy -var-file=$ENV.tfvars -auto-approve
+terraform -chdir=01-network destroy -var-file=$ENV.tfvars -auto-approve
 
 echo "$ENV environment destroyed successfully!"
