@@ -53,7 +53,7 @@ Download and install from: https://s3.amazonaws.com/session-manager-downloads/pl
 ```bash
 session-manager-plugin
 ```
-## Accessing EC2 Instances
+## Accessing bastion EC2 Instances
 
 ### Via SSM Session Manager
 
@@ -70,19 +70,16 @@ aws ec2 describe-instances \
 # Connect to bastion instance in prod environment
 ENV=prod
 instance_id=$(aws ec2 describe-instances \
-  --filters "Name=tag:Environment,Values=${ENV}" "Name=instance-state-name,Values=running" \
-  --query 'Reservations[].Instances[0].InstanceId | [0]' \
-  --output text)
+  --filters "Name=tag:Name,Values=gc-bastion-prod" "Name=instance-state-name,Values=running" \
+  --query 'Reservations[].Instances[0].InstanceId' --output text)
 aws ssm start-session --target ${instance_id}
 
-# Port forwarding (for rds database)
-aws ssm start-session \
-  --target ${instance_id} \
+# OR Port forwarding (for rds database)
+aws ssm start-session --target ${instance_id} \
   --document-name AWS-StartPortForwardingSessionToRemoteHost \
   --parameters '{
-    "host":["prod-aurora-cluster.cluster-cdqmgwiqilow.us-west-1.rds.amazonaws.com"],
-    "portNumber":["3306"],
-    "localPortNumber":["3306"]
+      "host":["prod-aurora-cluster.cluster-cdqmgwiqilow.us-west-1.rds.amazonaws.com"],
+      "portNumber":["3306"], "localPortNumber":["3306"] 
   }'
 ```
 
