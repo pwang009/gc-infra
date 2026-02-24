@@ -18,12 +18,4 @@ output "iam_group_arn" {
   value       = aws_iam_group.ssm_users.arn
 }
 
-output "ec2_ssm_bastion_instance_id" {
-  description = "Instance ID of the SSM bastion EC2"
-  value       = aws_instance.ec2_ssm_bastion.id
-}
-
-output "ec2_ssm_bastion_private_ip" {
-  description = "Private IP of the SSM bastion EC2"
-  value       = aws_instance.ec2_ssm_bastion.private_ip
-}
+# EC2 instance outputs removed - instance no longer exists
