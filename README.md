@@ -71,13 +71,13 @@ instanceID=$(aws ec2 describe-instances \
   --filters "Name=tag:Environment,Values=${ENV}" "Name=instance-state-name,Values=running" \
   --query 'Reservations[].Instances[0].InstanceId | [0]' \
   --output text)
-aws ssm start-session --target ${instanceID}
+aws ssm start-session --target ${instance_id}
 ```
 
 **Port forwarding (for database):**
 ```bash
 aws ssm start-session \
-  --target ${instanceID} \
+  --target ${instance_id} \
   --document-name AWS-StartPortForwardingSessionToRemoteHost \
   --parameters '{
     "host":["prod-aurora-cluster.cluster-cdqmgwiqilow.us-west-1.rds.amazonaws.com"],
@@ -106,7 +106,8 @@ sudo systemctl status api
 curl http://localhost:8080/greeting?name=Tony
 
 # 5. verify database
-mysql -h prod-aurora-cluster.cluster-cdqmgwiqilow.us-west-1.rds.amazonaws.com -u admin -p appdb
+# mysql -h prod-aurora-cluster.cluster-cdqmgwiqilow.us-west-1.rds.amazonaws.com -u admin -p appdb
+mysql -h prod-aurora-cluster.cluster-cdqmgwiqilow.us-west-1.rds.amazonaws.com -u appUser -p appProdDB
 ```
 
 ### Managing SSM Access

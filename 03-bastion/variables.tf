@@ -12,11 +12,6 @@ variable "ec2_instance_type" {
   default     = "t3.micro"
 }
 
-variable "app_s3_bucket" {
-  description = "S3 bucket name for application JAR files"
-  type        = string
-}
-
 variable "key_pair_name" {
   description = "EC2 key pair name for SSH access"
   type        = string

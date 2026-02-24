@@ -9,10 +9,7 @@ resource "aws_instance" "bastion" {
 
   subnet_id = data.terraform_remote_state.network.outputs.private_subnets[0]
 
-  user_data_base64 = base64encode(templatefile("${path.module}/user_data.sh", {
-    ENVIRONMENT = var.environment
-    S3_BUCKET   = var.app_s3_bucket
-  }))
+  user_data_base64 = base64encode(file("${path.module}/user_data.sh"))
 
   tags = {
     Name        = "gc-${var.environment}-bastion"

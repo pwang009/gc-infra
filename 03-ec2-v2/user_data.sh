@@ -11,7 +11,7 @@ yum install -y java-21-amazon-corretto-headless
 yum install -y amazon-cloudwatch-agent
 
 # Install MySQL client
-yum install -y mariadb105
+yum install -y mariadb105-client
 
 # Create app directory
 mkdir -p /opt/app

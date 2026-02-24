@@ -4,34 +4,32 @@ set -e
 # Update system
 yum update -y
 
-# Install Java 21 JRE (headless, production-optimized)
-yum install -y java-21-amazon-corretto-headless
+# Install MySQL client for database access from bastion
+yum install -y mariadb105-client
 
-# Install CloudWatch agent for logging
+# Optional: Install CloudWatch agent for monitoring (useful for bastion hosts)
 yum install -y amazon-cloudwatch-agent
 
-# Install MySQL client
-yum install -y mariadb105
-
-# Create app directory
-mkdir -p /opt/app
-chown ec2-user:ec2-user /opt/app
-
-# Download JAR from S3
-aws s3 cp s3://${S3_BUCKET}/${ENVIRONMENT}/app.jar /opt/app/app.jar
-chown ec2-user:ec2-user /opt/app/app.jar
-
-# Configure CloudWatch Logs
+# Configure basic CloudWatch monitoring for the bastion host
 cat > /opt/aws/amazon-cloudwatch-agent/etc/config.json <<'EOF'
 {
-  "logs": {
-    "logs_collected": {
-      "files": {
-        "collect_list": [{
-          "file_path": "/var/log/app.log",
-          "log_group_name": "/aws/ec2/${ENVIRONMENT}-api",
-          "log_stream_name": "{instance_id}"
-        }]
+  "metrics": {
+    "metrics_collected": {
+      "mem": {
+        "measurement": [
+          {"name": "mem_used_percent", "rename": "MemoryUtilization", "unit": "Percent"}
+        ]
+      },
+      "disk": {
+        "measurement": [
+          {"name": "disk_used_percent", "rename": "DiskUtilization", "unit": "Percent"}
+        ],
+        "resources": ["/"]
+      },
+      "cpu": {
+        "measurement": [
+          {"name": "cpu_usage_idle", "rename": "CPUUtilization", "unit": "Percent", "calcuation": "cpu_usage_total - cpu_usage_idle"}
+        ]
       }
     }
   }
@@ -45,30 +43,5 @@ EOF
   -s \
   -c file:/opt/aws/amazon-cloudwatch-agent/etc/config.json
 
-# Create systemd service for the API
-cat > /etc/systemd/system/api.service <<'EOF'
-[Unit]
-Description=REST API Service
-After=network.target
-
-[Service]
-Type=simple
-User=ec2-user
-WorkingDirectory=/opt/app
-ExecStart=/usr/bin/java -jar /opt/app/app.jar --server.servlet.context-path=/v1
-Restart=always
-RestartSec=10
-StandardOutput=append:/var/log/app.log
-StandardError=append:/var/log/app.log
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Enable and start service
-systemctl daemon-reload
-systemctl enable api
-systemctl start api
-
 # Signal completion
-echo "User data script completed successfully" > /var/log/userdata.log
+echo "Bastion host setup completed successfully" > /var/log/userdata.log
