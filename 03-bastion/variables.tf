@@ -17,3 +17,7 @@ variable "key_pair_name" {
   type        = string
   default     = "gconnex-ec2"
 }
+variable "certificate_arn" {
+  description = "ARN of the ACM certificate for VPN domain (vpn.abc.com)"
+  type        = string
+}

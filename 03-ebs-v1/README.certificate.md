@@ -3,7 +3,8 @@
 ## GET A CUSTOM DOMAIN CERTIFICATE
 ### send the request
 ```bash
-aws acm request-certificate --domain-name api.lishanteala.com --validation-method DNS --region us-west-1
+aws acm request-certificate --domain-name api.goodconnex.com --validation-method DNS --region us-west-1
+aws acm request-certificate --domain-name vpn.goodconnex.com --validation-method DNS --region us-west-1
 ```
 
 ### changes in godaddy.com
