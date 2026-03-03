@@ -12,11 +12,6 @@ variable "ec2_instance_type" {
   default     = "t3.micro"
 }
 
-variable "key_pair_name" {
-  description = "EC2 key pair name for SSH access"
-  type        = string
-  default     = "gconnex-ec2"
-}
 variable "certificate_arn" {
   description = "ARN of the ACM certificate for VPN domain (vpn.abc.com)"
   type        = string

@@ -14,10 +14,6 @@ variable "max_size" {
   type        = number
 }
 
-variable "desired_capacity" {
-  description = "Desired number of instances in ASG"
-  type        = number
-}
 variable "aws_region" {
   description = "AWS region"
   type        = string

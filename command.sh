@@ -68,3 +68,8 @@ cd ..
 
 ## Set PEM file permissions
 chmod 400 ${keyPairName}.pem
+
+
+# to see the retention of db
+db=$(aws rds describe-db-instances  --query "DBInstances[*].DBInstanceIdentifier" --output text)
+aws rds describe-db-instances --db-instance-identifier $db --query "DBInstances[0].BackupRetentionPeriod"

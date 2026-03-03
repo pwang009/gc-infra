@@ -1,7 +1,7 @@
 resource "aws_elastic_beanstalk_environment" "gc_api_prod" {
   name                = "gc-api-prod"
   application         = aws_elastic_beanstalk_application.gc_api.name
-  platform_arn = "arn:aws:elasticbeanstalk:us-west-1::platform/Corretto 21 running on 64bit Amazon Linux 2023/4.8.4"
+  platform_arn = "arn:aws:elasticbeanstalk:us-west-1::platform/Corretto 21 running on 64bit Amazon Linux 2023/4.9.0"
 
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
@@ -79,6 +79,11 @@ resource "aws_elastic_beanstalk_environment" "gc_api_prod" {
     namespace = "aws:elasticbeanstalk:environment"
     name      = "EnvironmentType"
     value     = "LoadBalanced"
+  }
+  setting {
+    namespace = "aws:elasticbeanstalk:environment:process:default"
+    name      = "HealthCheckPath"
+    value     = "/actuator/health"
   }
     # Set PORT environment variable for Spring Boot
   setting {

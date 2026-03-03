@@ -32,7 +32,7 @@ resource "aws_lb_target_group" "app_v1" {
     unhealthy_threshold = var.unhealthy_threshold
     timeout             = var.health_check_timeout
     interval            = var.health_check_interval
-    path                = var.health_check_path
+    path                = "/actuator/health"
     matcher             = "200"
   }
 
@@ -58,7 +58,7 @@ resource "aws_lb_target_group" "app_v2" {
     unhealthy_threshold = var.unhealthy_threshold
     timeout             = var.health_check_timeout
     interval            = var.health_check_interval
-    path                = "/"
+    path                = "/actuator/health"
     matcher             = "200"
   }
 

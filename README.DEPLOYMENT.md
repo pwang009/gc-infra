@@ -186,6 +186,7 @@ cd ..
 mvn clean package
 
 # Deploy to S3 and create version
+ENV=prod
 aws s3 cp target/app.jar s3://gc-app-deployments-c8f7ewhysy5a/${ENV}/app-v1.jar
 
 # Create application version in Beanstalk

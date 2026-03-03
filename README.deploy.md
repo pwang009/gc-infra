@@ -104,20 +104,20 @@ Deploy in this order:
 
 **1. Network (VPC, Subnets, Bastion)**
 ```bash
-cd 01-network
-terraform init -backend-config="key=${ENV}/network/terraform.tfstate"
-terraform plan -var-file=${ENV}.tfvars
-terraform apply -var-file=${ENV}.tfvars -auto-approve
+DIR=01-network;ENV=dev
+terraform -chdir=$DIR init -reconfigure-backend -config="key=${ENV}/network/terraform.tfstate"
+terraform -chdir=$DIR plan -var-file=${ENV}.tfvars
+terraform -chdir=$DIR apply -var-file=${ENV}.tfvars -auto-approve
 cd ..
 ```
 
 **2. Database (RDS Aurora)**
 ```bash
-cd 02-db
+DIR=02-db
 # terraform init -reconfigure -backend-config="key=${ENV}/app-ec2/terraform.tfstate"
-terraform init -backend-config="key=${ENV}/db/terraform.tfstate"
-terraform plan -var-file=${ENV}.tfvars
-terraform apply -var-file=${ENV}.tfvars -auto-approve
+terraform -chdir=$DIR init -reconfigure -backend-config=../backend.config -backend-config="key=${ENV}/db/terraform.tfstate"
+terraform -chdir=$DIR plan -backend-config="key=${ENV}/db/terraform.tfstate" var-file=${ENV}.tfvars
+terraform -chdir=$DIR apply -var-file=${ENV}.tfvars -auto-approve
 cd ..
 ```
 

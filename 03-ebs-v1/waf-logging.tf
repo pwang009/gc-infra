@@ -1,12 +1,13 @@
 # Kinesis Firehose for WAF logs to S3
 resource "aws_kinesis_firehose_delivery_stream" "waf_logs_firehose" {
-  name        = "waf-logs-firehose-${var.environment}"
+  name        = "aws-waf-logs-firehose-${var.environment}"
   destination = "extended_s3"
 
   extended_s3_configuration {
-    role_arn   = aws_iam_role.firehose_role.arn
-    bucket_arn = aws_s3_bucket.alb_access_logs.arn
-    prefix     = "waf-logs/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/"
+    role_arn            = aws_iam_role.firehose_role.arn
+    bucket_arn          = aws_s3_bucket.alb_access_logs.arn
+    prefix              = "waf-logs/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/"
+    error_output_prefix = "waf-logs-errors/"
   }
 }
 

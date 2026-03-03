@@ -1,7 +1,6 @@
 resource "aws_instance" "bastion" {
   ami           = data.aws_ami.amazon_linux_2023.id
   instance_type = var.ec2_instance_type
-  key_name      = var.key_pair_name
 
   iam_instance_profile = aws_iam_instance_profile.bastion_profile.name
 
