@@ -26,8 +26,8 @@ resource "aws_lb_target_group" "vpn_udp" {
     healthy_threshold   = 2
     unhealthy_threshold = 2
     interval            = 30
-    port                = "1194"
-    protocol            = "UDP"
+    port                = "943"
+    protocol            = "TCP"
   }
 
   tags = {
@@ -51,8 +51,7 @@ resource "aws_lb_target_group" "vpn_admin" {
     unhealthy_threshold = 2
     interval            = 30
     port                = "943"
-    protocol            = "HTTP"
-    path                = "/"
+    protocol            = "TCP"
   }
 
   tags = {
@@ -76,8 +75,7 @@ resource "aws_lb_target_group" "vpn_client" {
     unhealthy_threshold = 2
     interval            = 30
     port                = "443"
-    protocol            = "HTTP"
-    path                = "/"
+    protocol            = "TCP"
   }
 
   tags = {
@@ -99,12 +97,11 @@ resource "aws_lb_listener" "vpn_udp" {
   }
 }
 
-# Listener for TCP 943 (OpenVPN Admin) with TLS
+# Listener for TCP 943 (OpenVPN Admin) - TCP Passthrough
 resource "aws_lb_listener" "vpn_admin" {
   load_balancer_arn = aws_lb.vpn_nlb.arn
   port              = "943"
-  protocol          = "TLS"
-  certificate_arn   = var.certificate_arn
+  protocol          = "TCP"
 
   default_action {
     type             = "forward"
@@ -112,12 +109,11 @@ resource "aws_lb_listener" "vpn_admin" {
   }
 }
 
-# Listener for TCP 443 (OpenVPN Client Profile) with TLS
+# Listener for TCP 443 (OpenVPN Client Profile) - TCP Passthrough
 resource "aws_lb_listener" "vpn_client" {
   load_balancer_arn = aws_lb.vpn_nlb.arn
   port              = "443"
-  protocol          = "TLS"
-  certificate_arn   = var.certificate_arn
+  protocol          = "TCP"
 
   default_action {
     type             = "forward"

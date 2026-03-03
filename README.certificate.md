@@ -2,7 +2,8 @@
 
 ## send the request
 ```bash
-aws acm request-certificate --domain-name api.lishanteala.com --validation-method DNS --region us-west-1
+# aws acm request-certificate --domain-name api.lishanteala.com --validation-method DNS --region us-west-1
+aws acm request-certificate --domain-name vpn.lishanteala.com --validation-method DNS --region us-west-1
 ```
 
 ## changes in godaddy.com

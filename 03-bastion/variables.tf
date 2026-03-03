@@ -11,8 +11,3 @@ variable "ec2_instance_type" {
   type        = string
   default     = "t3.micro"
 }
-
-variable "certificate_arn" {
-  description = "ARN of the ACM certificate for VPN domain (vpn.abc.com)"
-  type        = string
-}

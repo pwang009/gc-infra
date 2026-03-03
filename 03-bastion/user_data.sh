@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Update system and install utilities
 yum update -y
-yum install -y mariadb105-client amazon-cloudwatch-agent openvpn easy-rsa
+yum install -y mariadb105-client amazon-cloudwatch-agent openvpn easy-rsa nginx certbot python3-certbot-nginx
 
 # Configure CloudWatch monitoring
 cat > /opt/aws/amazon-cloudwatch-agent/etc/config.json <<'EOF'
@@ -85,6 +85,46 @@ iptables -t nat -A POSTROUTING -s 172.20.1.0/24 -o eth0 -j MASQUERADE
 
 # Enable OpenVPN service
 systemctl enable --now openvpn-server@server
+
+# Setup Nginx for HTTPS web services
+mkdir -p /var/www/html
+cat > /var/www/html/index.html <<'EOF'
+<!DOCTYPE html>
+<html>
+<head><title>OpenVPN Bastion</title></head>
+<body><h1>OpenVPN Bastion</h1><p>Access admin: https://your-domain.com:943</p></body>
+</html>
+EOF
+
+# Create Nginx configuration for port 443 (client profile download)
+cat > /etc/nginx/conf.d/openvpn-client.conf <<'EOF'
+server {
+    listen 443 ssl http2;
+    server_name _;
+    
+    ssl_certificate /etc/letsencrypt/live/YOUR_DOMAIN/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/YOUR_DOMAIN/privkey.pem;
+    
+    location / {
+        root /var/www/html;
+        index index.html;
+    }
+    
+    # Serve OpenVPN client profile
+    location /client.ovpn {
+        alias /etc/openvpn/client.ovpn;
+        add_header Content-Disposition "attachment; filename=client.ovpn";
+    }
+}
+EOF
+
+# Start Nginx (will fail until certificates are installed, but that's OK)
+systemctl enable nginx || true
+systemctl start nginx || true
+
+# Note: User should manually run Certbot after getting the domain/NLB IP:
+# certbot certonly --standalone -d your-domain.com
+# Then update Nginx config with the certificate paths and reload
 
 # Export client configuration for later retrieval
 CLIENT_OVPN=/etc/openvpn/client.ovpn
