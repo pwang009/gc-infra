@@ -33,7 +33,8 @@ echo "Deploying $ENV environment..."
 MODULES=(01-network 02-db 03-bastion 03-ebs-v1 04-alb 05-ssm-access)
 for DIR in "${MODULES[@]}"; do
   [ "$INIT_FLAG" = "--init" ] && \
-  terraform -chdir=$DIR init -reconfigure -backend-config=../backend.config -backend-config="key=$ENV/$DIR/terraform.tfstate"
+  terraform -chdir=$DIR init -reconfigure -backend-config=../backend.config \
+    -backend-config="key=$ENV/$DIR/terraform.tfstate"
   terraform -chdir=$DIR plan -var-file=$ENV.tfvars
   terraform -chdir=$DIR apply -var-file=$ENV.tfvars -auto-approve
 done

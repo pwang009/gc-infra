@@ -7,10 +7,10 @@ output "codeartifact_repository" {
 }
 
 output "github_user_access_key" {
-  value = aws_iam_access_key.github_deploy.id
+  value = aws_iam_access_key.github_deployer.id
 }
 
 output "github_user_secret_key" {
-  value     = aws_iam_access_key.github_deploy.secret
+  value     = aws_iam_access_key.github_deployer.secret
   sensitive = true
 }
