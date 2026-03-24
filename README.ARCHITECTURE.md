@@ -9,7 +9,7 @@
                                │
               ┌────────────────┴────────────────┐
               │                                 │
-         api.abc.com                     vpn.abc.com
+      api.goodconnex.com                vpn.goodconnex.com
               │                                 │
     ┌─────────▼─────────┐           ┌──────────▼──────────┐
     │  ALB (Public)     │           │  NLB (Public)       │

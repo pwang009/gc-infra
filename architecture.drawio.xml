@@ -1,0 +1,90 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="GC API Architecture">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+        <!-- Internet -->
+        <mxCell id="internet" value="Internet / Users" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws3.internet_gateway;fillColor=#F58534;gradientColor=none;" vertex="1" parent="1">
+          <mxGeometry x="520" y="40" width="69" height="72" as="geometry"/>
+        </mxCell>
+        
+        <!-- ALB -->
+        <mxCell id="alb" value="ALB&#xa;api.goodconnex.com" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws4.application_load_balancer;fillColor=#F58536;gradientColor=none;" vertex="1" parent="1">
+          <mxGeometry x="360" y="180" width="78" height="78" as="geometry"/>
+        </mxCell>
+        
+        <!-- NLB -->
+        <mxCell id="nlb" value="NLB&#xa;vpn.goodconnex.com" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws4.network_load_balancer;fillColor=#F58536;gradientColor=none;" vertex="1" parent="1">
+          <mxGeometry x="680" y="180" width="78" height="78" as="geometry"/>
+        </mxCell>
+        
+        <!-- VPC -->
+        <mxCell id="vpc" value="VPC 10.66.0.0/16" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc;strokeColor=#248814;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#AAB7B8;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="200" y="300" width="760" height="480" as="geometry"/>
+        </mxCell>
+        
+        <!-- Public Subnet -->
+        <mxCell id="public" value="Public Subnets&#xa;10.66.1.0/24, 10.66.2.0/24" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_security_group;grStroke=0;strokeColor=#248814;fillColor=#E9F3E6;verticalAlign=top;align=left;spacingLeft=30;fontColor=#248814;dashed=0;" vertex="1" parent="vpc">
+          <mxGeometry x="20" y="40" width="720" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- NAT Gateway -->
+        <mxCell id="nat" value="NAT Gateway" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws4.nat_gateway;fillColor=#F58536;gradientColor=none;" vertex="1" parent="public">
+          <mxGeometry x="320" y="20" width="78" height="40" as="geometry"/>
+        </mxCell>
+        
+        <!-- Private Subnet -->
+        <mxCell id="private" value="Private Subnets&#xa;10.66.10.0/24, 10.66.11.0/24" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_security_group;grStroke=0;strokeColor=#147EBA;fillColor=#E6F2F8;verticalAlign=top;align=left;spacingLeft=30;fontColor=#147EBA;dashed=0;" vertex="1" parent="vpc">
+          <mxGeometry x="20" y="140" width="720" height="160" as="geometry"/>
+        </mxCell>
+        
+        <!-- Elastic Beanstalk -->
+        <mxCell id="ebs" value="Elastic Beanstalk&#xa;Spring Boot API" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws4.elastic_beanstalk;fillColor=#759C3E;gradientColor=none;" vertex="1" parent="private">
+          <mxGeometry x="80" y="40" width="78" height="93" as="geometry"/>
+        </mxCell>
+        
+        <!-- Bastion -->
+        <mxCell id="bastion" value="Bastion&#xa;OpenVPN" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws4.instance;fillColor=#F58536;gradientColor=none;" vertex="1" parent="private">
+          <mxGeometry x="480" y="40" width="78" height="78" as="geometry"/>
+        </mxCell>
+        
+        <!-- DB Subnet -->
+        <mxCell id="dbsubnet" value="DB Subnets&#xa;10.66.20.0/24, 10.66.21.0/24" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_security_group;grStroke=0;strokeColor=#C925D1;fillColor=#F5EEF8;verticalAlign=top;align=left;spacingLeft=30;fontColor=#C925D1;dashed=0;" vertex="1" parent="vpc">
+          <mxGeometry x="20" y="320" width="720" height="140" as="geometry"/>
+        </mxCell>
+        
+        <!-- RDS Aurora -->
+        <mxCell id="rds" value="RDS Aurora MySQL&#xa;Multi-AZ" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws4.aurora_instance;fillColor=#C925D1;gradientColor=none;" vertex="1" parent="dbsubnet">
+          <mxGeometry x="280" y="40" width="78" height="78" as="geometry"/>
+        </mxCell>
+        
+        <!-- CloudWatch -->
+        <mxCell id="cloudwatch" value="CloudWatch / X-Ray" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws4.cloudwatch;fillColor=#759C3E;gradientColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="500" width="78" height="78" as="geometry"/>
+        </mxCell>
+        
+        <!-- Connections -->
+        <mxCell edge="1" parent="1" source="internet" target="alb">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell edge="1" parent="1" source="internet" target="nlb">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell edge="1" parent="1" source="alb" target="ebs">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell edge="1" parent="1" source="nlb" target="bastion">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell edge="1" parent="1" source="ebs" target="rds">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell edge="1" parent="1" source="ebs" target="cloudwatch" style="dashed=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -74,7 +74,7 @@ mysql -h <RDS_ENDPOINT> -u appUser -p appProdDB
 
 ## Method 2: Port Forwarding to RDS (via Bastion)
 
-### Setup Port Forwarding
+### Setup Port Forwarding 
 
 ```bash
 # Set environment
