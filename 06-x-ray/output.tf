@@ -27,3 +27,18 @@ output "log_group_arn" {
   description = "CloudWatch log group ARN for X-Ray insights"
   value       = aws_cloudwatch_log_group.xray_insights.arn
 }
+
+output "cloudtrail_bucket_name" {
+  description = "S3 bucket name for CloudTrail logs"
+  value       = aws_s3_bucket.cloudtrail_logs.id
+}
+
+output "cloudtrail_log_group_name" {
+  description = "CloudWatch log group name for CloudTrail Cognito events"
+  value       = aws_cloudwatch_log_group.cloudtrail.name
+}
+
+output "cloudtrail_log_group_arn" {
+  description = "CloudWatch log group ARN for CloudTrail Cognito events"
+  value       = aws_cloudwatch_log_group.cloudtrail.arn
+}

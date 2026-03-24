@@ -105,7 +105,7 @@ Deploy in this order:
 **1. Network (VPC, Subnets, Bastion)**
 ```bash
 DIR=01-network;ENV=dev
-terraform -chdir=$DIR init -reconfigure-backend -config="key=${ENV}/network/terraform.tfstate"
+terraform -chdir=$DIR init -reconfigure -config="key=${ENV}/network/terraform.tfstate"
 terraform -chdir=$DIR plan -var-file=${ENV}.tfvars
 terraform -chdir=$DIR apply -var-file=${ENV}.tfvars -auto-approve
 cd ..

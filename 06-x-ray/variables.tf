@@ -23,3 +23,8 @@ variable "log_retention_days" {
   type        = number
   default     = 30
 }
+
+variable "terraform_state_bucket" {
+  description = "S3 bucket for Terraform state"
+  type        = string
+}

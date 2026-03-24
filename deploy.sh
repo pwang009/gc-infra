@@ -30,7 +30,7 @@ echo "Deploying $ENV environment..."
 
 # Initialize and apply infrastructure for each module
  echo "Initializing and applying Terraform..."
-MODULES=(01-network 02-db 03-bastion 03-ebs-v1 04-alb 05-ssm-access)
+MODULES=(01-network 02-db 03-bastion 08-cognito 03-ebs-v1 04-alb 05-ssm-access 06-x-ray)
 for DIR in "${MODULES[@]}"; do
   [ "$INIT_FLAG" = "--init" ] && \
   terraform -chdir=$DIR init -reconfigure -backend-config=../backend.config \
