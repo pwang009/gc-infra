@@ -40,4 +40,5 @@ resource "aws_cognito_user_pool_client" "app" {
   ]
 
   prevent_user_existence_errors = "ENABLED"
+  generate_secret               = true
 }

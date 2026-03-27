@@ -13,6 +13,12 @@ output "app_client_id" {
   value       = aws_cognito_user_pool_client.app.id
 }
 
+output "app_client_secret" {
+  description = "Cognito App Client Secret"
+  value       = aws_cognito_user_pool_client.app.client_secret
+  sensitive   = true
+}
+
 output "lambda_define_challenge_arn" {
   description = "Define Challenge Lambda ARN"
   value       = aws_lambda_alias.cognito_triggers["defineChallenge"].arn
