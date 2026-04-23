@@ -83,3 +83,9 @@ variable "preferred_maintenance_window" {
   type        = string
   default     = "sun:04:00-sun:05:00"
 }
+
+variable "external_rds_ips" {
+  description = "List of external IP addresses or CIDR blocks allowed to access RDS"
+  type        = list(string)
+  default     = []
+}

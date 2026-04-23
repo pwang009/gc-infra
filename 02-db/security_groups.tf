@@ -7,8 +7,8 @@ resource "aws_security_group" "rds_sg" {
     from_port   = 3306
     to_port     = 3306
     protocol    = "tcp"
-    cidr_blocks = [data.terraform_remote_state.network.outputs.vpc_cidr]
-    description = "MySQL from VPC"
+    cidr_blocks = concat([data.terraform_remote_state.network.outputs.vpc_cidr], var.external_rds_ips)
+    description = "MySQL from VPC and external IPs"
   }
 
   egress {

@@ -34,3 +34,8 @@ variable "ssl_certificate_arn" {
   description = "ARN of the SSL certificate for HTTPS"
   type        = string
 }
+
+variable "terraform_state_bucket" {
+  description = "S3 bucket name for Terraform remote state"
+  type        = string
+}

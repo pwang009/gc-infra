@@ -6,7 +6,7 @@ data "archive_file" "define_challenge" {
 
 data "archive_file" "generate_otp" {
   type        = "zip"
-  source_file = "${path.module}/lambda/generateOTP/index.js"
+  source_dir  = "${path.module}/lambda/generateOTP"
   output_path = "${path.module}/lambda/generateOTP/generateOTP.zip"
 }
 
@@ -37,6 +37,24 @@ resource "aws_iam_role" "lambda_cognito" {
 resource "aws_iam_role_policy_attachment" "lambda_basic" {
   role       = aws_iam_role.lambda_cognito.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy" "lambda_sns" {
+  name = "${var.environment}-cognito-lambda-sns"
+  role = aws_iam_role.lambda_cognito.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "sns:Publish"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
 }
 
 locals {

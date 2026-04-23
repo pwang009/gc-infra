@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Update system and install utilities
 yum update -y
-yum install -y mariadb105-client amazon-cloudwatch-agent openvpn easy-rsa nginx certbot python3-certbot-nginx
+yum install -y mariadb105-client amazon-cloudwatch-agent openvpn easy-rsa nginx certbot python3-certbot-nginx aws-xray-daemon
 
 # Configure CloudWatch monitoring
 cat > /opt/aws/amazon-cloudwatch-agent/etc/config.json <<'EOF'

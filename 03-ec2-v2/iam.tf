@@ -46,6 +46,28 @@ resource "aws_iam_role_policy_attachment" "app_cloudwatch" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
+resource "aws_iam_role_policy" "app_cognito_access" {
+  name = "${var.environment}-app-cognito-access"
+  role = aws_iam_role.app_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "cognito-idp:AdminUpdateUserAttributes",
+        "cognito-idp:AdminGetUser",
+        "cognito-idp:AdminInitiateAuth",
+        "cognito-idp:AdminRespondToAuthChallenge",
+        "cognito-idp:AdminConfirmSignUp"
+      ]
+      Resource = [
+        "arn:aws:cognito-idp:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:userpool/*"
+      ]
+    }]
+  })
+}
+
 resource "aws_iam_instance_profile" "app_profile" {
   name = "${var.environment}-app-profile"
   role = aws_iam_role.app_role.name

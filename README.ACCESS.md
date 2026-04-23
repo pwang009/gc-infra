@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document covers all methods to access resources in the stack: bastion via SSM, database via port forwarding, and database via bastion SSH tunnel.
+This document covers all methods to access resources in the stack: bastion via SSM and database via port forwarding (recommended secure approach).
 
 ## Prerequisites
 
@@ -120,31 +120,6 @@ SHOW TABLES;
 SELECT COUNT(*) FROM users;
 SELECT * FROM greetings LIMIT 10;
 ```
-
----
-
-## Method 3: SSH Tunnel via Bastion (Alternative)
-
-If you prefer traditional SSH tunneling:
-
-```bash
-# Get bastion public IP
-BASTION_IP=$(aws ec2 describe-instances \
-  --filters "Name=tag:Name,Values=gc-bastion-${ENV}" \
-              "Name=instance-state-name,Values=running" \
-  --query 'Reservations[0].Instances[0].PublicIpAddress' \
-  --output text)
-
-# SSH tunnel to RDS (using bastion's internal access)
-ssh -i /path/to/key.pem \
-    -L 3306:prod-aurora-cluster.cluster-cdqmgwiqilow.us-west-1.rds.amazonaws.com:3306 \
-    ec2-user@${BASTION_IP}
-
-# Then connect locally
-mysql -h 127.0.0.1 -u appUser -p appProdDB
-```
-
-Note: This requires SSH key pair access. SSM Session Manager (Method 1-2) is preferred for security.
 
 ---
 
