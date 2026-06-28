@@ -1,5 +1,5 @@
 resource "aws_security_group" "beanstalk" {
-  name        = "gc-api-beanstalk-prod"
+  name        = "gc-api-beanstalk-${var.environment}"
   description = "Allow traffic for Beanstalk app instances"
   vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
 
@@ -19,17 +19,7 @@ resource "aws_security_group" "beanstalk" {
     }
 
     tags = {
-      Name = "gc-api-beanstalk-prod"
-      Environment = "prod"
+      Name = "gc-api-beanstalk-${var.environment}"
+      Environment = var.environment
     }
-  }
-
-  # Data source to get ALB SG ID from 04-load-balancer
-  data "terraform_remote_state" "load_balancer" {
-    backend = "s3"
-    config = {
-      bucket = "gc-terraform-state-c8f7ewhysy5a"
-      key    = "prod/load-balancer/terraform.tfstate"
-      region = "us-west-1"
-	  }
   }

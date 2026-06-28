@@ -19,6 +19,11 @@ variable "aws_region" {
   type        = string
 }
 
+variable "terraform_state_bucket" {
+  description = "S3 bucket for Terraform remote state"
+  type        = string
+}
+
 variable "environment" {
   description = "Deployment environment (dev, prod)"
   type        = string
@@ -32,10 +37,5 @@ variable "app_port" {
 
 variable "ssl_certificate_arn" {
   description = "ARN of the SSL certificate for HTTPS"
-  type        = string
-}
-
-variable "terraform_state_bucket" {
-  description = "S3 bucket name for Terraform remote state"
   type        = string
 }

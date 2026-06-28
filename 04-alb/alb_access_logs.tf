@@ -1,24 +1,28 @@
 resource "aws_s3_bucket" "alb_access_logs" {
-  bucket = "gc-alb-access-logs"
+  bucket = "gc-alb-access-logs-${var.environment}"
   force_destroy = false
-  acl    = "private"
-
-  versioning {
-    enabled = true
-  }
-
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-    }
-  }
 
   tags = {
     Name        = "gc-alb-access-logs"
     Environment = var.environment
     ManagedBy   = "terraform"
+  }
+}
+
+resource "aws_s3_bucket_versioning" "alb_access_logs_versioning" {
+  bucket = aws_s3_bucket.alb_access_logs.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "alb_access_logs_encryption" {
+  bucket = aws_s3_bucket.alb_access_logs.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
   }
 }
 

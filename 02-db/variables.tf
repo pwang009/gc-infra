@@ -8,6 +8,11 @@ variable "environment" {
   type        = string
 }
 
+variable "terraform_state_bucket" {
+  description = "S3 bucket for Terraform remote state"
+  type        = string
+}
+
 variable "aurora_mode" {
   description = "Switch between Aurora Serverless v2 configuration and provisioned instances"
   type        = string

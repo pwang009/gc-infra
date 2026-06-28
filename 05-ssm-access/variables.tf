@@ -12,3 +12,8 @@ variable "allowed_source_ips" {
   description = "List of IP addresses allowed to access EC2 via SSM"
   type        = list(string)
 }
+
+variable "terraform_state_bucket" {
+  description = "S3 bucket for Terraform remote state"
+  type        = string
+}

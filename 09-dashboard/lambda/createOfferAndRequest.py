@@ -1,9 +1,12 @@
 import boto3
 import json
 import urllib.request
+import os
 
-ssm = boto3.client('ssm', region_name='us-west-1')
-cognito = boto3.client('cognito-idp', region_name='us-west-1')
+# Region should be set via environment variable or Lambda runtime
+REGION = os.environ.get('AWS_REGION', 'us-west-2')
+ssm = boto3.client('ssm', region_name=REGION)
+cognito = boto3.client('cognito-idp', region_name=REGION)
 
 USER_POOL_CLIENT_ID = "<your_cognito_client_id>"
 API_BASE = "https://<your-api-domain>/api/v1"

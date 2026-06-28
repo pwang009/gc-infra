@@ -1,10 +1,21 @@
-variable "region" {
+variable "aws_region" {
   description = "AWS region"
   type        = string
 }
 
+variable "region" {
+  description = "AWS region (legacy, use aws_region)"
+  type        = string
+  default     = ""
+}
+
 variable "environment" {
   description = "Environment name (dev, prod)"
+  type        = string
+}
+
+variable "terraform_state_bucket" {
+  description = "S3 bucket for Terraform remote state"
   type        = string
 }
 
@@ -36,4 +47,9 @@ variable "unhealthy_threshold" {
   description = "Number of consecutive health check failures required"
   type        = number
   default     = 2
+}
+
+variable "ssl_certificate_arn" {
+  description = "ARN of the SSL certificate for HTTPS listener"
+  type        = string
 }

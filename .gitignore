@@ -13,6 +13,17 @@ crash.*.log
 *.tfvars
 *.tfvars.json
 
+# But DO track non-sensitive config tfvars (secrets live in .env)
+!dev.tfvars
+!prod.tfvars
+!*-dev.tfvars
+!*-prod.tfvars
+
+# Environment files with sensitive data
+.env
+.env.local
+.env.*.local
+
 # Ignore override files as they are usually used to override resources locally
 override.tf
 override.tf.json

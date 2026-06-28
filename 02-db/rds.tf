@@ -8,8 +8,8 @@ resource "aws_cloudwatch_log_group" "aurora_general" {
   retention_in_days = 14
 }
 
-resource "aws_cloudwatch_log_group" "aurora_slowquery" {
-  name              = "/aws/rds/cluster/${aws_rds_cluster.aurora.cluster_identifier}/slowquery"
+resource "aws_cloudwatch_log_group" "aurora_postgresql" {
+  name              = "/aws/rds/cluster/${aws_rds_cluster.aurora.cluster_identifier}/postgresql"
   retention_in_days = 14
 }
 locals {
@@ -18,9 +18,9 @@ locals {
 
 resource "aws_rds_cluster" "aurora" {
   cluster_identifier              = "${var.environment}-aurora-cluster"
-  engine                          = "aurora-mysql"
-  engine_mode                     = "provisioned"
-  engine_version                  = "8.0.mysql_aurora.3.04.4"
+  engine                          = "aurora-postgresql"
+  engine_mode                     = local.serverless_mode ? "provisioned" : "provisioned"
+  engine_version                  = "16.4"
   database_name                   = var.db_name
   master_username                 = var.db_username
   master_password                 = var.db_password
@@ -29,7 +29,7 @@ resource "aws_rds_cluster" "aurora" {
   backup_retention_period         = var.backup_retention_period
   preferred_backup_window         = var.preferred_backup_window
   preferred_maintenance_window    = var.preferred_maintenance_window
-  enabled_cloudwatch_logs_exports = ["error", "general", "slowquery"]
+  enabled_cloudwatch_logs_exports = ["postgresql"]
   skip_final_snapshot             = var.environment == "dev" ? true : false
   final_snapshot_identifier       = var.environment == "dev" ? null : "${var.environment}-aurora-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
   deletion_protection             = false

@@ -43,11 +43,7 @@ fi
 
 echo "Destroying $ENV environment..."
 
-terraform -chdir=05-ssm-access destroy -var-file=$ENV.tfvars -auto-approve
-terraform -chdir=04-alb destroy -var-file=$ENV.tfvars -auto-approve
-terraform -chdir=03-ebs-v1 destroy -var-file=$ENV.tfvars -auto-approve
-terraform -chdir=03-bastion destroy -var-file=$ENV.tfvars -auto-approve
-terraform -chdir=02-db destroy -var-file=$ENV.tfvars -auto-approve
-terraform -chdir=01-network destroy -var-file=$ENV.tfvars -auto-approve
+terraform -chdir=08-cognito destroy -var-file=../$ENV.tfvars -auto-approve
+terraform -chdir=01-network destroy -var-file=../$ENV.tfvars -auto-approve
 
 echo "$ENV environment destroyed successfully!"

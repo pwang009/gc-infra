@@ -1,6 +1,16 @@
 #!/bin/bash
 set -e
 
+# Load environment variables from .env file if it exists
+if [ -f .env ]; then
+  set -a
+  source .env
+  set +a
+  echo "Loaded environment variables from .env"
+else
+  echo "Warning: .env file not found. Make sure TF_VAR_db_username and TF_VAR_db_password are set."
+fi
+
 ENV=$1
 INIT_FLAG=$2
 LOCK_FILE="/tmp/terraform-deploy-${ENV}.lock"
@@ -30,13 +40,26 @@ echo "Deploying $ENV environment..."
 
 # Initialize and apply infrastructure for each module
  echo "Initializing and applying Terraform..."
-MODULES=(01-network 02-db 03-bastion 08-cognito 03-ebs-v1 04-alb 05-ssm-access 06-x-ray)
+# MODULES=(01-network 08-cognito)
+# Note: 04-alb must come after 03-ebs-v1 since it needs the EBS state
+MODULES=(01-network 02-db 03-bastion 03-ebs-v1 04-alb 05-ssm-access 08-cognito)
 for DIR in "${MODULES[@]}"; do
-  [ "$INIT_FLAG" = "--init" ] && \
-  terraform -chdir=$DIR init -reconfigure -backend-config=../backend.config \
-    -backend-config="key=$ENV/$DIR/terraform.tfstate"
-  terraform -chdir=$DIR plan -var-file=$ENV.tfvars
-  terraform -chdir=$DIR apply -var-file=$ENV.tfvars -auto-approve
+  # Only init if --init flag is set OR if .terraform doesn't exist
+  if [ "$INIT_FLAG" = "--init" ] || [ ! -d "$DIR/.terraform" ]; then
+    echo "Initializing $DIR..."
+    terraform -chdir=$DIR init -reconfigure -backend-config=../backend.config \
+      -backend-config="key=$ENV/$DIR/terraform.tfstate"
+  fi
+  # Use module-specific tfvars file (e.g., 01-network-dev.tfvars)
+  # Check exists in root, but pass relative path to terraform (one level up from module)
+  TFVARS_FILENAME="${DIR}-${ENV}.tfvars"
+  if [ -f "$TFVARS_FILENAME" ]; then
+    terraform -chdir=$DIR plan -var-file="../$TFVARS_FILENAME" -compact-warnings
+    terraform -chdir=$DIR apply -var-file="../$TFVARS_FILENAME" -auto-approve -compact-warnings
+  else
+    echo "Error: $TFVARS_FILENAME not found in root directory"
+    exit 1
+  fi
 done
 
 echo "$ENV environment deployed successfully!"

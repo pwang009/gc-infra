@@ -32,7 +32,7 @@
 
 **Create S3 bucket for Terraform state (one-time setup):****
 ```bash
-bucketName=gc-terraform-state-c8f7ewhysy5a
+bucketName=gc-terraform-state-c8f7ewhysy5w
 aws s3 mb s3://${bucketName} 
 aws s3api put-bucket-versioning --bucket ${bucketName} --versioning-configuration Status=Enabled
 

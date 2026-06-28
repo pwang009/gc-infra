@@ -32,33 +32,3 @@ output "ssm_connect_command" {
   description = "AWS CLI command to connect to the instance via SSM"
   value       = "aws ssm start-session --target ${aws_instance.bastion.id}"
 }
-
-output "nlb_dns_name" {
-  description = "DNS name of the VPN NLB"
-  value       = aws_lb.vpn_nlb.dns_name
-}
-
-output "nlb_arn" {
-  description = "ARN of the VPN NLB"
-  value       = aws_lb.vpn_nlb.arn
-}
-
-output "nlb_zone_id" {
-  description = "Zone ID of the VPN NLB for Route 53 alias"
-  value       = aws_lb.vpn_nlb.zone_id
-}
-
-output "vpn_udp_target_group_arn" {
-  description = "ARN of the VPN UDP target group"
-  value       = aws_lb_target_group.vpn_udp.arn
-}
-
-output "vpn_admin_target_group_arn" {
-  description = "ARN of the VPN Admin target group"
-  value       = aws_lb_target_group.vpn_admin.arn
-}
-
-output "vpn_client_target_group_arn" {
-  description = "ARN of the VPN Client target group"
-  value       = aws_lb_target_group.vpn_client.arn
-}

@@ -24,7 +24,7 @@ resource "aws_security_group" "bastion_sg" {
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "HTTP for Let's Encrypt validation"
+    description = "HTTP for certificate validation"
   }
 
   ingress {

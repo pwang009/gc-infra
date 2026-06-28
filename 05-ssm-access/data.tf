@@ -13,7 +13,7 @@ data "aws_ami" "amazon_linux_2023" {
 data "terraform_remote_state" "network" {
   backend = "s3"
   config = {
-    bucket = "gc-terraform-state-c8f7ewhysy5a"
+    bucket = var.terraform_state_bucket
     key    = "${var.environment}/01-network/terraform.tfstate"
     region = var.aws_region
   }
@@ -22,7 +22,7 @@ data "terraform_remote_state" "network" {
 data "terraform_remote_state" "db" {
   backend = "s3"
   config = {
-    bucket = "gc-terraform-state-c8f7ewhysy5a"
+    bucket = var.terraform_state_bucket
     key    = "${var.environment}/02-db/terraform.tfstate"
     region = var.aws_region
   }
