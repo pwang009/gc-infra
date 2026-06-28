@@ -94,3 +94,33 @@ variable "external_rds_ips" {
   type        = list(string)
   default     = []
 }
+
+variable "enable_redis" {
+  description = "Enable ElastiCache Redis"
+  type        = bool
+  default     = true
+}
+
+variable "redis_engine" {
+  description = "ElastiCache engine (redis or valkey)"
+  type        = string
+  default     = "valkey"
+}
+
+variable "redis_node_type" {
+  description = "ElastiCache Redis node type"
+  type        = string
+  default     = "cache.t4g.micro"
+}
+
+variable "redis_engine_version" {
+  description = "ElastiCache Redis engine version"
+  type        = string
+  default     = "7.1"
+}
+
+variable "redis_parameter_group_name" {
+  description = "ElastiCache Redis parameter group name"
+  type        = string
+  default     = "default.redis7"
+}

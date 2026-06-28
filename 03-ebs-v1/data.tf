@@ -15,3 +15,12 @@ data "terraform_remote_state" "cognito" {
     region = var.aws_region
   }
 }
+
+data "terraform_remote_state" "db" {
+  backend = "s3"
+  config = {
+    bucket = var.terraform_state_bucket
+    key    = "${var.environment}/02-db/terraform.tfstate"
+    region = var.aws_region
+  }
+}

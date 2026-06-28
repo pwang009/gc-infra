@@ -64,6 +64,17 @@ resource "aws_elastic_beanstalk_environment" "gc_api" {
     name      = "PORT"
     value     = var.app_port
   }
+  # Redis (ElastiCache) connection details
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name      = "REDIS_HOST"
+    value     = data.terraform_remote_state.db.outputs.redis_endpoint
+  }
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name      = "REDIS_PORT"
+    value     = data.terraform_remote_state.db.outputs.redis_port
+  }
 
   # CloudWatch log streaming
   setting {

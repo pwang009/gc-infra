@@ -32,3 +32,18 @@ output "security_group_id" {
   description = "Security group ID for RDS"
   value       = aws_security_group.rds_sg.id
 }
+
+output "redis_endpoint" {
+  description = "ElastiCache Redis primary endpoint address"
+  value       = var.enable_redis ? aws_elasticache_replication_group.redis[0].primary_endpoint_address : null
+}
+
+output "redis_port" {
+  description = "ElastiCache Redis port"
+  value       = var.enable_redis ? 6379 : null
+}
+
+output "redis_security_group_id" {
+  description = "Security group ID for ElastiCache Redis"
+  value       = var.enable_redis ? aws_security_group.redis_sg[0].id : null
+}
