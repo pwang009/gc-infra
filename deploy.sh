@@ -50,14 +50,14 @@ for DIR in "${MODULES[@]}"; do
     terraform -chdir=$DIR init -reconfigure -backend-config=../backend.config \
       -backend-config="key=$ENV/$DIR/terraform.tfstate"
   fi
-  # Use module-specific tfvars file (e.g., 01-network-dev.tfvars)
-  # Check exists in root, but pass relative path to terraform (one level up from module)
+  # Use module-specific tfvars file (e.g., tfvars/dev/01-network-dev.tfvars)
   TFVARS_FILENAME="${DIR}-${ENV}.tfvars"
-  if [ -f "$TFVARS_FILENAME" ]; then
-    terraform -chdir=$DIR plan -var-file="../$TFVARS_FILENAME" -compact-warnings
-    terraform -chdir=$DIR apply -var-file="../$TFVARS_FILENAME" -auto-approve -compact-warnings
+  TFVARS_PATH="tfvars/${ENV}/${TFVARS_FILENAME}"
+  if [ -f "$TFVARS_PATH" ]; then
+    terraform -chdir=$DIR plan -var-file="../$TFVARS_PATH" -compact-warnings
+    terraform -chdir=$DIR apply -var-file="../$TFVARS_PATH" -auto-approve -compact-warnings
   else
-    echo "Error: $TFVARS_FILENAME not found in root directory"
+    echo "Error: $TFVARS_PATH not found"
     exit 1
   fi
 done
