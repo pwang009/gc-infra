@@ -17,3 +17,9 @@ variable "ec2_instance_type" {
   type        = string
   default     = "t3.micro"
 }
+
+variable "allowed_source_ips" {
+  description = "List of source IP CIDRs allowed to reach the bastion on management ports"
+  type        = list(string)
+  default     = []
+}

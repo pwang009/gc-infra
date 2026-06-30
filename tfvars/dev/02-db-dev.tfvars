@@ -7,6 +7,7 @@ aurora_mode = "serverless"
 instance_class = "db.serverless"
 instance_count = 1
 enable_proxy = false
+external_rds_ips = ["70.181.86.188/32"]
    
 # Redis (ElastiCache) - small single-node for dev
 enable_redis = true

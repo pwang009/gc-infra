@@ -1,335 +1,282 @@
-# GC API Production Stack - Access & Connectivity
+# GC Infrastructure Access Guide
 
-## Overview
+This guide documents the supported ways to access the private infrastructure in this stack. The recommended path is:
 
-This document covers all methods to access resources in the stack: bastion via SSM and database via port forwarding (recommended secure approach).
+1. Use AWS Systems Manager Session Manager for shell access.
+2. Use SSM port forwarding for database access.
+3. Use the application endpoint or load balancer for normal application traffic.
 
 ## Prerequisites
 
-1. **AWS CLI** v2 installed
-2. **Session Manager Plugin** installed
-3. **MySQL Client** (optional, for direct DB queries)
-4. IAM user with appropriate permissions (see below)
+Before you start, make sure you have:
 
-### Install Session Manager Plugin
+- AWS CLI v2 installed and configured
+- The Session Manager plugin installed
+- Access to the appropriate IAM permissions for SSM, EC2, and RDS
+- Optional: a PostgreSQL client such as psql for direct database queries
 
-**macOS:**
+### Install the Session Manager plugin
+
+WSL Ubuntu / Ubuntu Linux:
 ```bash
-brew install --cask session-manager-plugin
-```
-
-**Linux:**
-```bash
-curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
+curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o session-manager-plugin.deb
+sudo apt update
 sudo dpkg -i session-manager-plugin.deb
+sudo apt-get install -f -y
 ```
 
-**Windows:**
-Download and install from: https://s3.amazonaws.com/session-manager-downloads/plugin/latest/windows/SessionManagerPluginSetup.exe
+If you are using WSL and the plugin is not recognized, restart WSL after installation:
+```bash
+wsl --shutdown
+```
 
-**Verify:**
+Verify the installation:
 ```bash
 session-manager-plugin
 ```
 
+macOS:
+```bash
+brew install --cask session-manager-plugin
+```
+
+Windows:
+Download the installer from the AWS Session Manager plugin page.
+
 ---
 
-## Method 1: SSM Session Manager (Bastion Shell Access)
+## 1. Connect to the bastion with Session Manager
 
-### Quick Connect
+Set your environment first:
 
 ```bash
-# Set environment
-export ENV=prod  # or dev
+# export ENV=prod   # or dev
+export ENV=dev   
+```
 
-# Get bastion instance ID
+Find the bastion instance ID:
+
+```bash
 BASTION_ID=$(aws ec2 describe-instances \
   --filters "Name=tag:Name,Values=gc-bastion-${ENV}" \
-              "Name=instance-state-name,Values=running" \
+            "Name=instance-state-name,Values=running" \
   --query 'Reservations[0].Instances[0].InstanceId' \
   --output text)
-
-# Start interactive session
-aws ssm start-session --target ${BASTION_ID}
+echo $BASTION_ID
 ```
 
-### Once Connected to Bastion
+Start an interactive shell:
 
 ```bash
-# Check system health
+aws ssm start-session --target "$BASTION_ID"
+```
+
+Once connected, you can check the host and inspect the stack:
+
+```bash
 uptime
 df -h
-
-# View OpenVPN status
-sudo systemctl status openvpn-server@server
-
-# View X-Ray daemon (if enabled)
-sudo systemctl status xray
-
-# List available databases via MySQL in bastion
-mysql -h <RDS_ENDPOINT> -u appUser -p appProdDB
+sudo systemctl status xray 2>/dev/null || true
 ```
 
 ---
 
-## Method 2: Port Forwarding to RDS (via Bastion)
+## 2. Access RDS through a local port forward
 
-### Setup Port Forwarding 
+The most secure way to reach the database is to open a tunnel from your machine through the bastion.
+
+### Start the port forward
 
 ```bash
-# Set environment
-export ENV=prod
+export ENV=dev
 export BASTION_ID=$(aws ec2 describe-instances \
   --filters "Name=tag:Name,Values=gc-bastion-${ENV}" \
-              "Name=instance-state-name,Values=running" \
+            "Name=instance-state-name,Values=running" \
   --query 'Reservations[0].Instances[0].InstanceId' \
   --output text)
 
-# Start port forwarding session
-aws ssm start-session --target ${BASTION_ID} \
+export RDS_ENDPOINT=$(aws rds describe-db-clusters \
+  --query 'DBClusters[0].Endpoint' \
+  --output text)
+
+echo "$RDS_ENDPOINT"
+
+aws ssm start-session --target "$BASTION_ID" \
   --document-name AWS-StartPortForwardingSessionToRemoteHost \
-  --parameters '{
-    "host":["prod-aurora-cluster.cluster-cdqmgwiqilow.us-west-1.rds.amazonaws.com"],
-    "portNumber":["3306"],
-    "localPortNumber":["3306"]
-  }'
+  --parameters "{
+    \"host\":[\"$RDS_ENDPOINT\"],
+    \"portNumber\":[\"5432\"],
+    \"localPortNumber\":[\"5432\"]
+  }"
 ```
 
-### Connect to Database via Local Port
+Leave that terminal open, then verify the local tunnel is listening in a second terminal:
 
-**In another terminal:**
 ```bash
-# Connect using MySQL client
-mysql -h 127.0.0.1 -u appUser -p appProdDB
-
-# Or for admin user
-mysql -h 127.0.0.1 -u admin -p
+nc -vz 127.0.0.1 5432
 ```
 
-### Example Queries
+You should see a success message such as `Connection to 127.0.0.1 5432 port [tcp/postgresql] succeeded!` before connecting locally:
+
+```bash
+psql "host=127.0.0.1 port=5432 dbname=goodconnex user=<db_user>"
+```
+
+You will be prompted for the database password. If you need the credentials, retrieve them from the appropriate secret store or ask the platform owner.
+
+### Example queries
 
 ```sql
--- Show databases
-SHOW DATABASES;
-
--- Show tables
-USE appProdDB;
-SHOW TABLES;
-
--- Check application data
-SELECT COUNT(*) FROM users;
-SELECT * FROM greetings LIMIT 10;
+\l
+\c <database_name>
+\dt
 ```
 
 ---
 
-## Accessing Beanstalk Instances (Direct Shell)
+## 3. Reach private application instances
 
-Beanstalk instances are in private subnets, accessible only via bastion or ALN.
+Private application hosts are not directly reachable from the public internet. Use one of the following patterns.
 
-### Option A: Via Bastion Tunnel
+### Option A: Use the bastion as a jump host
+
+From your local machine, start a Session Manager session to the bastion, then from the bastion shell connect to the target instance:
 
 ```bash
-# 1. SSH into bastion
-aws ssm start-session --target ${BASTION_ID}
-
-# 2. From bastion shell, SSH to Beanstalk instance
-ssh -i /opt/bastion/.ssh/id_rsa ec2-user@10.66.10.15
+ssh -i /opt/bastion/.ssh/id_rsa ec2-user@<private-ip>
 ```
 
-### Option B: Direct SSM (if instance has IAM role)
+### Option B: Connect directly with SSM
+
+If the target instance is configured with an SSM-enabled IAM role, you can connect directly:
 
 ```bash
-# Get Beanstalk instance ID (replace with your ASG instance)
-BEANSTALK_ID=$(aws autoscaling describe-auto-scaling-groups \
-  --auto-scaling-group-names "gc-api-prod-asg" \
+INSTANCE_ID=$(aws autoscaling describe-auto-scaling-groups \
+  --auto-scaling-group-names "<asg-name>" \
   --query 'AutoScalingGroups[0].Instances[0].InstanceId' \
   --output text)
 
-# Connect directly
-aws ssm start-session --target ${BEANSTALK_ID}
+aws ssm start-session --target "$INSTANCE_ID"
 ```
+
+> Prefer the bastion when you are troubleshooting shared infrastructure, especially when multiple teams may be involved.
 
 ---
 
-## Application Logging & Monitoring
+## 4. Review logs and monitoring data
 
-### View Beanstalk Logs
+### Application logs
 
-**Via AWS Console:**
-1. Elastic Beanstalk → Environment → Logs
-2. Request logs from last 100 lines or tail in real-time
+Use the Elastic Beanstalk console or CLI to fetch logs:
 
-**Via CLI:**
 ```bash
-# Retrieve logs
 aws elasticbeanstalk request-environment-info \
-  --environment-name gc-api-prod \
+  --environment-name <environment-name> \
   --info-type tail
 
-# Fetch and stream
 aws elasticbeanstalk retrieve-environment-info \
-  --environment-name gc-api-prod \
+  --environment-name <environment-name> \
   --info-type tail \
   --query 'EnvironmentInfo[0].Message' \
   --output text | tar xz -O | tail -f
 ```
 
-### View ALB Access Logs
+### ALB access logs
 
-Logs are stored in S3.
+ALB logs are stored in S3. You can list and download them with the AWS CLI:
 
 ```bash
-# List ALB logs
-aws s3 ls s3://gc-app-alb-logs-c8f7ewhysy5a/prod/AWSLogs/ --recursive
-
-# Download and view
-aws s3 cp s3://gc-app-alb-logs-c8f7ewhysy5a/prod/AWSLogs/123456789/elasticloadbalancing/us-west-1/2025-02-25/.../ . --recursive
-
-# Parse ALB logs (find slow requests)
-grep -i "elb_status_code.*5" *.log  # 5xx errors
-awk '{print $NF}' *.log | sort -n | tail -20  # slowest requests
+aws s3 ls s3://<alb-log-bucket>/<env>/AWSLogs/ --recursive
 ```
 
 ---
 
-## Bastion Access Control (IAM)
+## 5. Manage who can use the bastion
 
-### List Authorized Users
+List the users currently allowed to use the SSM access group:
 
 ```bash
-# All users in SSM access group
 aws iam get-group --group-name prod-ssm-users \
   --query 'Users[*].[UserName,Arn]' \
   --output table
 ```
 
-### Add User to SSM Group
+Add or remove a user:
 
 ```bash
-# Add john.doe@company.com
 aws iam add-user-to-group \
-  --user-name john.doe \
+  --user-name <username> \
   --group-name prod-ssm-users
 ```
 
-### Remove User from SSM Group
-
 ```bash
-# Remove john.doe@company.com
 aws iam remove-user-from-group \
-  --user-name john.doe \
+  --user-name <username> \
   --group-name prod-ssm-users
 ```
 
----
-
-## Restrict Access by IP (Optional)
-
-Edit `05-ssm-access/prod.tfvars`:
-
-```hcl
-# Only allow these IPs to create SSM sessions
-allowed_source_ips = [
-  "70.181.86.188/32",      # Your office
-  "203.0.113.45/32",        # Your home
-  "203.0.113.0/24"          # Corporate VPN subnet
-]
-```
-
-Then apply:
-
-```bash
-cd 05-ssm-access
-terraform apply -var-file=prod.tfvars
-cd ..
-```
+If you want to restrict access by source IP, update the SSM access module inputs and apply the change from the relevant Terraform folder.
 
 ---
 
-## Bastion Logs (SSM Sessions)
+## 6. Session logging and auditability
 
-All SSM sessions are logged to CloudTrail and CloudWatch.
+SSM sessions are recorded to CloudTrail and CloudWatch Logs. Review them when you need to verify who accessed the bastion and when.
 
 ```bash
-# View recent SSM session logs
 aws logs tail /aws/ssm/session-logs --follow
+```
 
-# Find sessions for specific user
+To search for sessions by user:
+
+```bash
 aws logs filter-log-events \
   --log-group-name /aws/ssm/session-logs \
-  --filter-pattern '[username = "john.doe", ...]' \
+  --filter-pattern '[username = "<username>", ...]' \
   --query 'events[*].[timestamp,message]'
 ```
 
 ---
 
-## VPN Access (Alternative to Bastion)
+## 7. Troubleshooting
 
-If your VPN is set up (see README.CERTIFICATES.md):
+### SSM session will not start
+
+Check the instance state, SSM agent health, and IAM permissions:
 
 ```bash
-# Connect to VPN
-openvpn --config bastion-client.ovpn
+aws ec2 describe-instances --instance-ids <instance-id> \
+  --query 'Reservations[0].Instances[0].[State.Name,InstanceStatus.Status]'
 
-# Once connected, you get IP 172.20.1.x
-# Can now access private resources directly:
-curl http://10.66.10.15:8080/v1/greetings  # Beanstalk internal
-mysql -h 10.66.20.10 -u appUser -p         # RDS internal
+aws ssm describe-instance-information
 ```
+
+If SSM still fails, confirm that the instance role includes the required SSM policy and that outbound HTTPS access is allowed.
+
+### Cannot reach the database
+
+Verify the endpoint, inbound security group rules, and secrets:
+
+```bash
+aws rds describe-db-clusters --query 'DBClusters[0].[DBClusterIdentifier,Endpoint]'
+aws secretsmanager get-secret-value --secret-id <secret-id>
+```
+
+### Port forwarding appears stuck
+
+Check the bastion health and retry the session:
+
+```bash
+aws ssm describe-instance-information --instance-information-filter-list key=tag:Name,valueSet=gc-bastion-prod
+```
+
+If the tunnel is still unstable, restart the bastion and try again.
 
 ---
 
-## Troubleshooting Access Issues
+## Security notes
 
-### SSM Session Won't Connect
-
-```bash
-# 1. Check instance status
-aws ec2 describe-instances --instance-ids i-0123456789abcdef0 \
-  --query 'Reservations[0].Instances[0].[State.Name,InstanceStatus.Status]'
-
-# 2. Check IAM role has SSM permissions
-aws iam get-role-policy \
-  --role-name gc-api-prod-eb-ec2-role \
-  --policy-name ssm-permissions
-
-# 3. Check security group allows outbound to SSM (port 443)
-aws ec2 describe-security-groups --group-ids sg-0123456789abcdef0
-
-# 4. Verify instance has SSM agent running
-aws ssm describe-instance-information
-
-# 5. Check CloudTrail for errors
-aws cloudtrail lookup-events --lookup-attributes AttributeKey=ResourceName,AttributeValue=gc-bastion-prod
-```
-
-### Can't Reach Database
-
-```bash
-# 1. Verify RDS endpoint is correct
-aws rds describe-db-clusters --query 'DBClusters[0].[DBClusterIdentifier,Endpoint]'
-
-# 2. Check security group allows 3306 from bastion
-aws ec2 describe-security-groups --group-ids <RDS_SG_ID> | grep 3306
-
-# 3. Verify database credentials
-# (Ask your DBA or check Secrets Manager)
-aws secretsmanager get-secret-value --secret-id prod/rds/app-user
-```
-
-### Port Forwarding Hangs
-
-```bash
-# 1. Check bastion health
-aws ssm describe-instance-information --instance-information-filter-list key=tag:Name,valueSet=gc-bastion-prod
-
-# 2. Restart the bastion and try again
-# (Port forwarding usually recovers after 30 seconds)
-
-# 3. Check CloudWatch logs for bastion
-aws logs tail /aws/ssm/session-logs --follow
-
-# 4. Try a simple SSM command first
-aws ssm start-session --target <INSTANCE_ID> --document-name AWS-StartInteractiveCommand
-```
+- Use SSM rather than opening direct SSH access to private instances whenever possible.
+- Keep IAM permissions scoped to the minimum required for the task.
+- Treat bastion access as privileged access and review session logs regularly.
+- If VPN access is part of your environment, use it only when the network path requires it.

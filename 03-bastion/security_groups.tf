@@ -7,48 +7,8 @@ resource "aws_security_group" "bastion_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [data.terraform_remote_state.network.outputs.vpc_cidr]
-    description = "SSH from VPC"
-  }
-
-  ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = [data.terraform_remote_state.network.outputs.vpc_cidr]
-    description = "Application port from VPC"
-  }
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "HTTP for certificate validation"
-  }
-
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "HTTPS for client profile download"
-  }
-
-  ingress {
-    from_port   = 943
-    to_port     = 943
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "OpenVPN admin portal HTTPS"
-  }
-
-  ingress {
-    from_port   = 1194
-    to_port     = 1194
-    protocol    = "udp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "OpenVPN tunnel traffic"
+    cidr_blocks = var.allowed_source_ips
+    description = "SSH from authorized client IPs"
   }
 
   egress {

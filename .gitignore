@@ -63,3 +63,8 @@ Thumbs.db
 *.tmp
 .terraform.tfstate.lock.info
 **/node_modules/**
+
+# Python testing
+__pycache__
+.venv
+test-api*.zip
