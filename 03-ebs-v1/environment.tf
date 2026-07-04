@@ -56,7 +56,7 @@ resource "aws_elastic_beanstalk_environment" "gc_api" {
   setting {
     namespace = "aws:elasticbeanstalk:environment:process:default"
     name      = "HealthCheckPath"
-    value     = "/"
+    value     = "/health"
   }
     # Set PORT environment variable for Python app
   setting {
