@@ -42,7 +42,7 @@ echo "Deploying $ENV environment..."
  echo "Initializing and applying Terraform..."
 # MODULES=(01-network 08-cognito)
 # Note: 04-alb must come after 03-ebs-v1 since it needs the EBS state
-MODULES=(01-network 02-db 03-bastion 03-ebs-v1 04-alb 05-ssm-access 08-cognito)
+MODULES=(01-network 02-db 03-bastion 03-ebs-v1 04-alb 05-ssm-access 07-cicd 08-cognito)
 for DIR in "${MODULES[@]}"; do
   # Only init if --init flag is set OR if .terraform doesn't exist
   if [ "$INIT_FLAG" = "--init" ] || [ ! -d "$DIR/.terraform" ]; then
@@ -50,15 +50,15 @@ for DIR in "${MODULES[@]}"; do
     terraform -chdir=$DIR init -reconfigure -backend-config=../backend.config \
       -backend-config="key=$ENV/$DIR/terraform.tfstate"
   fi
-  # Use module-specific tfvars file (e.g., tfvars/dev/01-network-dev.tfvars)
+
   TFVARS_FILENAME="${DIR}-${ENV}.tfvars"
   TFVARS_PATH="tfvars/${ENV}/${TFVARS_FILENAME}"
   if [ -f "$TFVARS_PATH" ]; then
+    echo "Using tfvars file: $TFVARS_PATH"
     terraform -chdir=$DIR plan -var-file="../$TFVARS_PATH" -compact-warnings
     terraform -chdir=$DIR apply -var-file="../$TFVARS_PATH" -auto-approve -compact-warnings
   else
-    echo "Error: $TFVARS_PATH not found"
-    exit 1
+    echo "Warning: $TFVARS_PATH not found; skipping plan/apply for $DIR"
   fi
 done
 

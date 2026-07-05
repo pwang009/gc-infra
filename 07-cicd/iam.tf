@@ -39,8 +39,8 @@ resource "aws_iam_user_policy" "github_deployer" {
           "s3:ListBucket"
         ]
         Resource = [
-          "arn:aws:s3:::gc-app-deployments-c8f7ewhysy5a",
-          "arn:aws:s3:::gc-app-deployments-c8f7ewhysy5a/*"
+          "arn:aws:s3:::${var.deployment_bucket_name}",
+          "arn:aws:s3:::${var.deployment_bucket_name}/*"
         ]
       },
       {

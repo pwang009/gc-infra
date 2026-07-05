@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "artifacts" {
-  bucket = "gc-app-deployments-c8f7ewhysy5a"
+  bucket = var.deployment_bucket_name
 }
 
 resource "aws_s3_bucket_versioning" "artifacts" {

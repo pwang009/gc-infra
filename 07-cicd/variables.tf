@@ -15,3 +15,9 @@ variable "terraform_state_bucket" {
   description = "S3 bucket for Terraform remote state"
   type        = string
 }
+
+variable "deployment_bucket_name" {
+  description = "S3 bucket used for deployment artifacts"
+  type        = string
+  default     = "gc-app-deployments-c8f7ewhysy5w"
+}
