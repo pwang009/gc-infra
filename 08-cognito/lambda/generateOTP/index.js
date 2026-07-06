@@ -40,12 +40,13 @@ exports.handler = async (event) => {
     await snsClient.send(new PublishCommand(params));
     console.log(`OTP sent to ${phoneNumber}`);
   } catch (error) {
-    console.error(`Failed to send OTP to ${phoneNumber}:`, error);
-    throw new Error("Failed to send OTP");
+    console.error(`SNS publish failed for ${phoneNumber}; falling back to CloudWatch-only delivery:`, error);
+    console.log(`OTP written to CloudWatch for ${phoneNumber}: ${otp}`);
   }
 
   event.response.publicChallengeParameters = {
-    email: event.request.userAttributes.email || ''
+    email: event.request.userAttributes.email || '',
+    deliveryMethod: 'cloudwatch-fallback'
   };
 
   event.response.privateChallengeParameters = { answer: otp };

@@ -68,3 +68,6 @@ Thumbs.db
 __pycache__
 .venv
 test-api*.zip
+
+# Lambda deployment archives
+**/*.zip
