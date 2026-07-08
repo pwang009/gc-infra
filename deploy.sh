@@ -40,9 +40,9 @@ echo "Deploying $ENV environment..."
 
 # Initialize and apply infrastructure for each module
  echo "Initializing and applying Terraform..."
-# MODULES=(01-network 08-cognito)
-# Note: 04-alb must come after 03-ebs-v1 since it needs the EBS state
-MODULES=(01-network 02-db 03-bastion 03-ebs-v1 04-alb 05-ssm-access 07-cicd 08-cognito)
+# Note: 08-cognito should come before 03-ebs-v1 because the Beanstalk role policy
+# references the Cognito user pool ARN from the Cognito stack.
+MODULES=(01-network 02-db 03-bastion 08-cognito 03-ebs-v1 04-alb 05-ssm-access 07-cicd)
 for DIR in "${MODULES[@]}"; do
   # Only init if --init flag is set OR if .terraform doesn't exist
   if [ "$INIT_FLAG" = "--init" ] || [ ! -d "$DIR/.terraform" ]; then

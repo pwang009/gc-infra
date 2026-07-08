@@ -42,3 +42,9 @@ resource "aws_cognito_user_pool_client" "app" {
   prevent_user_existence_errors = "ENABLED"
   generate_secret               = true
 }
+
+resource "aws_cognito_user_group" "users" {
+  name         = "users"
+  user_pool_id = aws_cognito_user_pool.main.id
+  description  = "Default group for newly signed-up users"
+}

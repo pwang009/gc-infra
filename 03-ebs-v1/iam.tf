@@ -56,7 +56,8 @@ resource "aws_iam_role_policy" "cognito_access" {
           "cognito-idp:InitiateAuth",
           "cognito-idp:RespondToAuthChallenge",
           "cognito-idp:GetUser",
-          "cognito-idp:AdminGetUser"
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:AdminConfirmSignUp"
         ]
         Resource = data.terraform_remote_state.cognito.outputs.user_pool_arn
       }
