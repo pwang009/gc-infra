@@ -23,6 +23,11 @@ resource "aws_cognito_user_pool" "main" {
     verify_auth_challenge_response = aws_lambda_alias.cognito_triggers["validateChallenge"].arn
   }
 
+  sms_configuration {
+    external_id    = var.cognito_sms_external_id
+    sns_caller_arn = aws_iam_role.cognito_sms.arn
+  }
+
   tags = {
     Name        = "${var.environment}-user-pool"
     Environment = var.environment
@@ -38,6 +43,16 @@ resource "aws_cognito_user_pool_client" "app" {
     "ALLOW_CUSTOM_AUTH",
     "ALLOW_REFRESH_TOKEN_AUTH"
   ]
+
+  access_token_validity  = 60
+  id_token_validity      = 60
+  refresh_token_validity = 30
+
+  token_validity_units {
+    access_token  = "minutes"
+    id_token      = "minutes"
+    refresh_token = "days"
+  }
 
   prevent_user_existence_errors = "ENABLED"
   generate_secret               = true

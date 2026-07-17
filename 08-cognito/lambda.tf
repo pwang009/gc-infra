@@ -59,8 +59,8 @@ resource "aws_iam_role_policy" "lambda_sns" {
 
 locals {
   lambdas = {
-    defineChallenge   = { archive = data.archive_file.define_challenge,   handler = "index.handler" }
-    generateOTP       = { archive = data.archive_file.generate_otp,       handler = "index.handler" }
+    defineChallenge   = { archive = data.archive_file.define_challenge, handler = "index.handler" }
+    generateOTP       = { archive = data.archive_file.generate_otp, handler = "index.handler" }
     validateChallenge = { archive = data.archive_file.validate_challenge, handler = "index.handler" }
   }
 }

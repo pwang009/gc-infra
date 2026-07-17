@@ -30,3 +30,8 @@ variable "log_retention_days" {
   type        = number
   default     = 30
 }
+
+variable "cognito_sms_external_id" {
+  description = "External ID used by Cognito when assuming the SMS publishing IAM role"
+  type        = string
+}

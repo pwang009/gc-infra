@@ -34,6 +34,11 @@ output "lambda_validate_challenge_arn" {
   value       = aws_lambda_alias.cognito_triggers["validateChallenge"].arn
 }
 
+output "sms_role_arn" {
+  description = "The IAM role ARN Cognito uses to send SMS messages"
+  value       = aws_iam_role.cognito_sms.arn
+}
+
 output "cloudtrail_log_group_name" {
   description = "CloudWatch log group name for CloudTrail Cognito events"
   value       = aws_cloudwatch_log_group.cloudtrail.name
