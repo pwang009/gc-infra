@@ -22,7 +22,7 @@ resource "aws_iam_group" "api_testers" {
 
 resource "aws_iam_policy" "api_testers_cloudwatch_logs" {
   name        = "${var.environment}-api-testers-cloudwatch-logs"
-  description = "Allow API-Testers to view Cognito Lambda and Beanstalk CloudWatch log streams"
+  description = "Allow API-Testers to view CloudWatch metrics and Cognito/Beanstalk log streams"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -32,6 +32,16 @@ resource "aws_iam_policy" "api_testers_cloudwatch_logs" {
         Effect = "Allow"
         Action = [
           "logs:DescribeLogGroups"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "ReadCloudWatchMetrics"
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:GetMetricData",
+          "cloudwatch:GetMetricStatistics",
+          "cloudwatch:ListMetrics"
         ]
         Resource = "*"
       },
@@ -105,4 +115,9 @@ resource "aws_iam_group_policy_attachment" "api_testers_logs" {
 resource "aws_iam_group_policy_attachment" "api_testers_ssm" {
   group      = aws_iam_group.api_testers.name
   policy_arn = aws_iam_policy.api_testers_ssm_port_forwarding.arn
+}
+
+resource "aws_iam_user_group_membership" "pwang006_api_testers" {
+  user  = "pwang006"
+  groups = [aws_iam_group.api_testers.name]
 }

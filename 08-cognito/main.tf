@@ -4,10 +4,12 @@ resource "aws_cognito_user_pool" "main" {
   username_attributes = ["phone_number"]
 
   password_policy {
-    minimum_length    = var.password_minimum_length
-    require_uppercase = true
-    require_numbers   = true
-    require_symbols   = false
+    minimum_length                   = var.password_minimum_length
+    require_uppercase                = true
+    require_lowercase                = true
+    require_numbers                  = true
+    require_symbols                  = true
+    temporary_password_validity_days = 7
   }
 
   schema {
