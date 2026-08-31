@@ -96,8 +96,8 @@ flowchart TB
 
 1. **Launch Lightsail Instance**:
    * Platform: Linux/Unix.
-   * Blueprint: **WordPress** (packaged by Bitnami / AWS).
-   * Choose instance plan (e.g., $5–$10/mo tier).
+   * Blueprint: **`wordpress_ls_1_0`** (AWS native WordPress image on Amazon Linux with IMDSv2 enforced, MariaDB, PHP 8.x, and built-in Lightsail HTTPS workflow — **no Bitnami**).
+   * Bundle: Configurable via `bundle_id` (e.g., `micro_3_0` for $5/mo or `small_3_0` for $10/mo).
 2. **Attach Static IP**:
    * Allocate and attach a Lightsail Static IP to the WordPress instance.
 3. **Add DNS Record in GoDaddy**:
@@ -106,7 +106,7 @@ flowchart TB
    * Value: `<Lightsail_Static_IP>`
    * TTL: 600 seconds (or 1/2 hour)
 4. **Configure Domain & HTTPS in Lightsail**:
-   * SSH into Lightsail instance and run Bitnami `bncert-tool` for `wp.goodconnex.com`.
+   * Use Lightsail's built-in HTTPS certificate workflow from the Lightsail console or via standard `certbot` on the instance for `wp.goodconnex.com`.
    * Configure WordPress URL (`WP_HOME` and `WP_SITEURL`) to `https://wp.goodconnex.com`.
 5. **Content Extraction & Authoring**:
    * Marketing authors log in to `https://wp.goodconnex.com/wp-admin`.
@@ -164,7 +164,7 @@ flowchart TB
 ### Phase 6: Marketing Cutover in GoDaddy & Production Promotion
 
 1. **Promote Lightsail WordPress to `www.goodconnex.com`**:
-   * Re-run Bitnami HTTPS tool (`bncert-tool`) on Lightsail to include `www.goodconnex.com` and `goodconnex.com`.
+   * Add custom domain / SSL certificate in Lightsail for `www.goodconnex.com` and `goodconnex.com`.
    * Update WordPress site URL and home URL from `https://wp.goodconnex.com` to `https://www.goodconnex.com` (e.g., `wp search-replace 'wp.goodconnex.com' 'www.goodconnex.com'`).
    * Update base app URL in WordPress to `https://app.goodconnex.com` (when Prod app is live).
 2. **Update GoDaddy DNS for `www`**:
