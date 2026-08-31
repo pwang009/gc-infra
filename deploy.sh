@@ -51,12 +51,12 @@ for DIR in "${MODULES[@]}"; do
       -backend-config="key=$ENV/$DIR/terraform.tfstate"
   fi
 
-  TFVARS_FILENAME="${DIR}-${ENV}.tfvars"
-  TFVARS_PATH="tfvars/${ENV}/${TFVARS_FILENAME}"
+  TFVARS_FILENAME="${DIR}.tfvars"; TFVARS_PATH="tfvars/${ENV}/${TFVARS_FILENAME}"
   if [ -f "$TFVARS_PATH" ]; then
     echo "Using tfvars file: $TFVARS_PATH"
     terraform -chdir=$DIR plan -var-file="../$TFVARS_PATH" -compact-warnings
-    terraform -chdir=$DIR apply -var-file="../$TFVARS_PATH" -auto-approve -compact-warnings
+    terraform -chdir=$DIR apply -var-file="../$TFVARS_PATH" -auto-approve -compact-warnings -auto-approve
+    
   else
     echo "Warning: $TFVARS_PATH not found; skipping plan/apply for $DIR"
   fi

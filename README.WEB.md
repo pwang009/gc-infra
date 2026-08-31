@@ -92,29 +92,26 @@ flowchart TB
 
 ---
 
-### Phase 2: Deploy New WordPress on AWS Lightsail (`wp.goodconnex.com`)
+### Phase 2: Deploy New WordPress & CloudFront CDN (`wp.goodconnex.com`)
 
-1. **Launch Lightsail Instance**:
-   * Platform: Linux/Unix.
-   * Blueprint: **`wordpress_ls_1_0`** (AWS native WordPress image on Amazon Linux with IMDSv2 enforced, MariaDB, PHP 8.x, and built-in Lightsail HTTPS workflow — **no Bitnami**).
-   * Bundle: Configurable via `bundle_id` (e.g., `micro_3_0` for $5/mo or `small_3_0` for $10/mo).
-2. **Attach Static IP**:
-   * Allocate and attach a Lightsail Static IP to the WordPress instance.
-3. **Add DNS Record in GoDaddy**:
-   * Type: `A`
-   * Host / Name: `wp`
-   * Value: `<Lightsail_Static_IP>`
-   * TTL: 600 seconds (or 1/2 hour)
-4. **Configure Domain & HTTPS in Lightsail**:
-   * Use Lightsail's built-in HTTPS certificate workflow from the Lightsail console or via standard `certbot` on the instance for `wp.goodconnex.com`.
-   * Configure WordPress URL (`WP_HOME` and `WP_SITEURL`) to `https://wp.goodconnex.com`.
-5. **Content Extraction & Authoring**:
-   * Marketing authors log in to `https://wp.goodconnex.com/wp-admin`.
-   * They can view the live `www.goodconnex.com` side-by-side, extract content/assets, and build the new WordPress pages.
+1. **Request ACM Certificate in `us-east-1` for CloudFront**:
+   * Request ACM certificate for `wp.goodconnex.com` in `us-east-1` (ARN: `arn:aws:acm:us-east-1:339087217430:certificate/4daf92dd-8152-4a14-9079-ea86dc6247fb`).
+   * Validate via DNS in GoDaddy.
+2. **Deploy Lightsail & CloudFront via Terraform (`12-web`)**:
+   * Provisions Lightsail WordPress (`wordpress_ls_1_0`) on static IP.
+   * Provisions AWS CloudFront Distribution in front of the static IP using the `us-east-1` ACM Certificate.
+   * CloudFront terminates HTTPS with TLS 1.2, handles gzip compression, forwards essential WordPress cookies/headers, and automatically passes `/wp-admin/*`, `/wp-login.php`, and `/wp-json/*` straight to origin without caching.
+3. **Route Traffic in GoDaddy**:
+   * Add a CNAME in GoDaddy DNS:
+     * **Host**: `wp`
+     * **Points to / Value**: `<cloudfront_domain_name>` (e.g. `dxxxxxxxxxxxx.cloudfront.net` from `terraform output cloudfront_domain_name`).
+4. **Content Extraction & Authoring**:
+   * Marketing authors log in securely via HTTPS to `https://wp.goodconnex.com/wp-admin`.
+   * They can extract content from the live `www.goodconnex.com` side-by-side and build new marketing pages.
 
 ---
 
-### Phase 3: Deploy Dev Dynamic Application (`app-dev.goodconnex.com`)
+### Phase 3: Deploy Dev Dynamic Application (`app.dev.goodconnex.com`)
 
 1. **Deploy Dev Infrastructure**:
    * Deploy Dev VPC using [tfvars/dev/01-network-dev.tfvars](tfvars/dev/01-network-dev.tfvars).
