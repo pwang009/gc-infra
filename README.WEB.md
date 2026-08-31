@@ -2,22 +2,18 @@
 
 ## 1. Overview & Architecture
 
-This plan details the implementation for building a new marketing website on **AWS Lightsail (WordPress)** while maintaining the existing live site on **GoDaddy** (`www.goodconnex.com`) during content migration. The new WordPress site will initially be staged on a temporary subdomain (`wp.goodconnex.com`), integrated with a dynamic application running on **AWS Elastic Beanstalk** (`app-dev.goodconnex.com` / `api-dev.goodconnex.com` in Dev VPC, transitioning to `app.goodconnex.com` / `api.goodconnex.com` in Prod VPC), authenticated via **AWS Cognito**, with DNS delegated from **GoDaddy** to **Amazon Route 53**.
+This plan details the implementation for building a new marketing website on **AWS Lightsail (WordPress)** while maintaining the existing live site on **GoDaddy** (`www.goodconnex.com`) during content migration. 
+
+**DNS Strategy**: GoDaddy remains the authoritative DNS provider for all phases initially. Subdomains (`wp.goodconnex.com`, `app-dev.goodconnex.com`, `api-dev.goodconnex.com`, and ACM validation CNAMEs) are created directly in GoDaddy DNS. Migration to **Amazon Route 53** is deferred to a later dedicated phase.
 
 ```mermaid
 flowchart TB
-    subgraph Registrar["GoDaddy Registrar"]
-        GD["goodconnex.com<br/>(Custom NS Delegation to Route 53)"]
-        OLD_HOST["Existing GoDaddy Website Host<br/>(Kept active during migration)"]
-    end
-
-    subgraph Route53["AWS Route 53 (Hosted Zone: goodconnex.com)"]
-        R53_WWW["www.goodconnex.com (Points to OLD GoDaddy IP during Phase 2-4)"]
-        R53_WP["wp.goodconnex.com (Points to Lightsail)"]
-        R53_APP_DEV["app-dev.goodconnex.com (CNAME/Alias)"]
-        R53_API_DEV["api-dev.goodconnex.com (CNAME/Alias)"]
-        R53_APP_PROD["app.goodconnex.com (Future Prod)"]
-        R53_API_PROD["api.goodconnex.com (Future Prod)"]
+    subgraph Registrar["GoDaddy DNS (Authoritative for goodconnex.com)"]
+        GD_WWW["www.goodconnex.com (A: Points to OLD Hosting during Phase 1-4)"]
+        GD_WP["wp.goodconnex.com (A: Points to Lightsail Static IP)"]
+        GD_APP_DEV["app-dev.goodconnex.com (CNAME: Dev Beanstalk/ALB DNS)"]
+        GD_API_DEV["api-dev.goodconnex.com (CNAME: Dev API ALB DNS)"]
+        GD_ACM["_xxx.goodconnex.com (CNAME: ACM Certificate Validation)"]
     end
 
     subgraph Lightsail["AWS Lightsail (Isolated Environment)"]
@@ -50,13 +46,10 @@ flowchart TB
         EBS_API_PROD --> RDS_PROD
     end
 
-    GD --> Route53
-    R53_WWW -->|"Keeps live site accessible"| OLD_HOST
-    R53_WP -->|"New WP staging access"| WP
-    R53_APP_DEV --> ALB_DEV
-    R53_API_DEV --> ALB_DEV
-    R53_APP_PROD -.-> ALB_PROD
-    R53_API_PROD -.-> ALB_PROD
+    GD_WWW -->|"Keeps live site accessible"| OLD_HOST["Existing GoDaddy Website Host"]
+    GD_WP -->|"New WP staging access"| WP
+    GD_APP_DEV --> ALB_DEV
+    GD_API_DEV --> ALB_DEV
 
     WP -.->|"Login / CTA (Redirect to app-dev)"| EBS_APP_DEV
     EBS_APP_DEV <--> COG
@@ -65,41 +58,41 @@ flowchart TB
 
 ---
 
-## 2. Key Strategy: Zero-Downtime Migration & Staging
+## 2. Key Strategy: Keep GoDaddy DNS & Zero Downtime
 
-Because the existing `www.goodconnex.com` is live on GoDaddy hosting:
-1. **Do not immediately point `www.goodconnex.com` to Lightsail**.
-2. **Replicate existing DNS records in Route 53 first**: Before changing nameservers at GoDaddy, copy the existing GoDaddy hosting IP into Route 53 so the live site experiences zero downtime when nameservers switch.
-3. **Use a Staging Subdomain for Lightsail**: Spin up Lightsail under `wp.goodconnex.com`. Marketing can build, extract, and format content on Lightsail while viewing the old site side-by-side.
-4. **Instant Cutover**: When the new WordPress site is finished and approved, switch the `www.goodconnex.com` Route 53 record to point to the Lightsail instance and decommission the old hosting.
+1. **No Nameserver Changes**: GoDaddy remains the DNS authority. No NS changes or delegation to Route 53 at this stage.
+2. **Side-by-Side Coexistence**:
+   * Current site stays live at `www.goodconnex.com` on existing hosting.
+   * New WordPress is launched on AWS Lightsail and mapped to `wp.goodconnex.com` via an `A` record in GoDaddy.
+3. **AWS ACM Validation in GoDaddy**: Request a public certificate in AWS Certificate Manager for `*.goodconnex.com` and add the generated CNAME validation record directly into GoDaddy DNS.
+4. **Instant Cutover in GoDaddy**: When marketing finishes authoring on WordPress, update the `www` `A` record in GoDaddy to the Lightsail IP.
+5. **Future Route 53 Migration**: When ready to move DNS to Route 53 (e.g., alongside production launch), all GoDaddy records can be exported/recreated in Route 53 before changing nameservers.
 
 ---
 
 ## 3. Step-by-Step Execution Plan
 
-### Phase 1: DNS Setup & Domain Delegation (GoDaddy $\rightarrow$ Route 53)
+### Phase 1: GoDaddy DNS Inventory & ACM Certificate
 
 1. **Inventory Existing GoDaddy DNS Records**:
-   * Log in to GoDaddy and record ALL current DNS records (e.g., existing hosting `A` record for `www` and apex `@`, MX records for email/Office 365/Google Workspace, TXT records for SPF/DKIM).
-2. **Create Public Hosted Zone in AWS Route 53**:
-   * Create a public hosted zone for `goodconnex.com`.
-   * Recreate **all** existing records in Route 53:
-     * `www.goodconnex.com` $\rightarrow$ Existing GoDaddy hosting IP.
-     * `goodconnex.com` $\rightarrow$ Existing GoDaddy hosting IP.
-     * Copy all existing MX, TXT, and CNAME records.
-   * Add a staging record for the upcoming Lightsail instance:
-     * `wp.goodconnex.com` $\rightarrow$ Lightsail Static IP.
-3. **Delegate DNS in GoDaddy**:
-   * In GoDaddy DNS Management, change nameservers to the 4 AWS Route 53 nameservers.
-   * **Result**: The existing website and email continue functioning without any disruption.
-4. **Request Wildcard SSL/TLS Certificate in AWS Certificate Manager (ACM)**:
-   * Request a public certificate in region `us-west-2` (and `us-east-1` if using CloudFront).
-   * Domain names: `goodconnex.com` and `*.goodconnex.com`.
-   * Complete DNS validation via Route 53.
+   * Export or query all records via GoDaddy API / curl or DNS tools:
+     ```bash
+     export GODADDY_KEY="your_api_key"
+     export GODADDY_SECRET="your_api_secret"
+     curl -s -X GET "https://api.godaddy.com/v1/domains/goodconnex.com/records" \
+       -H "Authorization: sso-key ${GODADDY_KEY}:${GODADDY_SECRET}" \
+       -H "Accept: application/json" > godaddy_dns_backup.json
+     ```
+2. **Request Wildcard SSL/TLS Certificate in AWS ACM**:
+   * In AWS Certificate Manager (`us-west-2`), request a public certificate for `goodconnex.com` and `*.goodconnex.com`.
+   * ACM provides a CNAME name and value for DNS validation (e.g. `_a7b8c...goodconnex.com` $\rightarrow$ `_x2y3z...acm-validations.aws.`).
+3. **Add ACM Validation CNAME to GoDaddy**:
+   * Add the CNAME validation record in GoDaddy DNS Management.
+   * Within a few minutes, AWS ACM certificate status becomes **Issued**.
 
 ---
 
-### Phase 2: Deploy New WordPress on AWS Lightsail in Staging
+### Phase 2: Deploy New WordPress on AWS Lightsail (`wp.goodconnex.com`)
 
 1. **Launch Lightsail Instance**:
    * Platform: Linux/Unix.
@@ -107,28 +100,32 @@ Because the existing `www.goodconnex.com` is live on GoDaddy hosting:
    * Choose instance plan (e.g., $5–$10/mo tier).
 2. **Attach Static IP**:
    * Allocate and attach a Lightsail Static IP to the WordPress instance.
-3. **Configure Staging Domain & HTTPS in Lightsail**:
-   * Use Bitnami `bncert-tool` (or Lightsail distribution) to configure SSL for `wp.goodconnex.com`.
+3. **Add DNS Record in GoDaddy**:
+   * Type: `A`
+   * Host / Name: `wp`
+   * Value: `<Lightsail_Static_IP>`
+   * TTL: 600 seconds (or 1/2 hour)
+4. **Configure Domain & HTTPS in Lightsail**:
+   * SSH into Lightsail instance and run Bitnami `bncert-tool` for `wp.goodconnex.com`.
    * Configure WordPress URL (`WP_HOME` and `WP_SITEURL`) to `https://wp.goodconnex.com`.
-4. **Content Extraction & Authoring**:
+5. **Content Extraction & Authoring**:
    * Marketing authors log in to `https://wp.goodconnex.com/wp-admin`.
-   * They can extract text, images, and content from the live `www.goodconnex.com` (running on old hosting) and rebuild/modernize it inside the new Lightsail instance.
+   * They can view the live `www.goodconnex.com` side-by-side, extract content/assets, and build the new WordPress pages.
 
 ---
 
 ### Phase 3: Deploy Dev Dynamic Application (`app-dev.goodconnex.com`)
 
 1. **Deploy Dev Infrastructure**:
-   * Deploy the Dev VPC using [tfvars/dev/01-network-dev.tfvars](tfvars/dev/01-network-dev.tfvars).
+   * Deploy Dev VPC using [tfvars/dev/01-network-dev.tfvars](tfvars/dev/01-network-dev.tfvars).
    * Deploy Dev Database (RDS & Redis) using [tfvars/dev/02-db-dev.tfvars](tfvars/dev/02-db-dev.tfvars).
    * Deploy Dev API Beanstalk using `03-ebs-v1` (`api-dev.goodconnex.com`).
    * Deploy/configure Dev App Beanstalk for dynamic web frontend (`app-dev.goodconnex.com`).
-2. **Configure Load Balancer & SSL**:
-   * Attach the ACM wildcard certificate to the Dev ALB HTTPS (443) listener.
-   * Route traffic to the dynamic application environment.
-3. **Create Route 53 Records**:
-   * Create `A` (Alias) or `CNAME` for `app-dev.goodconnex.com` $\rightarrow$ Dev ALB DNS.
-   * Create `A` (Alias) or `CNAME` for `api-dev.goodconnex.com` $\rightarrow$ Dev ALB DNS.
+2. **Attach ACM Certificate to Dev ALB**:
+   * Attach the issued ACM wildcard certificate to the Dev ALB HTTPS (443) listener.
+3. **Add Subdomain CNAMEs in GoDaddy**:
+   * Type: `CNAME` | Host: `app-dev` | Value: `<Dev_ALB_DNS_Name>` (e.g., `awseb-e-xxx.us-west-2.elb.amazonaws.com`)
+   * Type: `CNAME` | Host: `api-dev` | Value: `<Dev_ALB_DNS_Name>`
 
 ---
 
@@ -164,32 +161,46 @@ Because the existing `www.goodconnex.com` is live on GoDaddy hosting:
 
 ---
 
-### Phase 6: Production Promotion & Final Marketing Cutover
+### Phase 6: Marketing Cutover in GoDaddy & Production Promotion
 
-1. **Deploy Production Stack**:
+1. **Promote Lightsail WordPress to `www.goodconnex.com`**:
+   * Re-run Bitnami HTTPS tool (`bncert-tool`) on Lightsail to include `www.goodconnex.com` and `goodconnex.com`.
+   * Update WordPress site URL and home URL from `https://wp.goodconnex.com` to `https://www.goodconnex.com` (e.g., `wp search-replace 'wp.goodconnex.com' 'www.goodconnex.com'`).
+   * Update base app URL in WordPress to `https://app.goodconnex.com` (when Prod app is live).
+2. **Update GoDaddy DNS for `www`**:
+   * Change `A` record for `www` in GoDaddy from old hosting IP $\rightarrow$ `<Lightsail_Static_IP>`.
+   * Configure GoDaddy domain forwarding / apex `@` redirect to `https://www.goodconnex.com`.
+3. **Deploy Production Stack & Point CNAMEs**:
    * Deploy Prod VPC (`10.66.0.0/16`) and database clusters (Aurora Multi-AZ, ElastiCache).
    * Deploy Prod Beanstalk environments for `app.goodconnex.com` and `api.goodconnex.com`.
-   * Add Route 53 records for `app.goodconnex.com` and `api.goodconnex.com` pointing to Prod ALB.
-2. **Promote Lightsail WordPress from Staging to `www.goodconnex.com`**:
-   * Re-run Bitnami HTTPS tool (`bncert-tool`) on Lightsail to add certificates for `www.goodconnex.com` and `goodconnex.com`.
-   * Update WordPress site URL and home URL from `https://wp.goodconnex.com` to `https://www.goodconnex.com` (e.g., using `wp-cli` search-replace: `wp search-replace 'wp.goodconnex.com' 'www.goodconnex.com'`).
-   * Update the base app URL in WordPress to `https://app.goodconnex.com`.
-3. **Switch Route 53 DNS for `www` & Apex**:
-   * Update Route 53 `A` record for `www.goodconnex.com` $\rightarrow$ Lightsail Static IP (replaces old GoDaddy hosting IP).
-   * Update Route 53 `A` record for `goodconnex.com` $\rightarrow$ Redirect to `www.goodconnex.com` or Lightsail Static IP.
-4. **Decommission Old Hosting**:
-   * After verification and DNS propagation, retire the old hosting package at GoDaddy.
+   * In GoDaddy DNS, add:
+     * Type: `CNAME` | Host: `app` | Value: `<Prod_ALB_DNS_Name>`
+     * Type: `CNAME` | Host: `api` | Value: `<Prod_ALB_DNS_Name>`
+4. **Decommission Old GoDaddy Hosting**:
+   * Once cutover is verified, cancel the old hosting package.
 
 ---
 
-## 4. Domain & Routing Progression Table
+### Phase 7 (Optional / Later): Route 53 DNS Migration
 
-| Subdomain | During Content Migration (Phases 1–5) | After Final Cutover (Phase 6) |
-| :--- | :--- | :--- |
-| `www.goodconnex.com` | Old GoDaddy Hosting (Live site to extract from) | **New Lightsail WordPress** |
-| `wp.goodconnex.com` | **New Lightsail WordPress** (Authoring & testing) | Decommissioned / Internal Staging |
-| `app-dev.goodconnex.com` | Dev Beanstalk App (Dev VPC) | Dev Beanstalk App (Dev VPC) |
-| `api-dev.goodconnex.com` | Dev Beanstalk API (Dev VPC) | Dev Beanstalk API (Dev VPC) |
-| `app.goodconnex.com` | Not deployed yet | **Prod Beanstalk App (Prod VPC)** |
-| `api.goodconnex.com` | Not deployed yet | **Prod Beanstalk API (Prod VPC)** |
+When you are ready to migrate authoritative DNS from GoDaddy to AWS Route 53:
+1. Create a Public Hosted Zone for `goodconnex.com` in Route 53.
+2. Replicate all active GoDaddy records (Apex, `www`, `wp`, `app`, `api`, `app-dev`, `api-dev`, MX, TXT).
+3. In GoDaddy DNS Management, change nameservers to the 4 AWS Route 53 NS servers.
+
+---
+
+## 4. DNS Records in GoDaddy (Progression Table)
+
+| Record Type | Host / Name | Target / Value (Phases 1–5) | Target / Value (After Cutover - Phase 6) |
+| :--- | :--- | :--- | :--- |
+| `A` | `www` | Existing GoDaddy Hosting IP | **Lightsail Static IP** |
+| `A` | `@` (Apex) | Existing GoDaddy Hosting IP / Forwarding | Forwarding to `https://www.goodconnex.com` |
+| `A` | `wp` | **Lightsail Static IP** | Lightsail Static IP (or removed) |
+| `CNAME` | `app-dev` | Dev ALB DNS name | Dev ALB DNS name |
+| `CNAME` | `api-dev` | Dev ALB DNS name | Dev ALB DNS name |
+| `CNAME` | `app` | *(Not created yet)* | **Prod ALB DNS name** |
+| `CNAME` | `api` | *(Not created yet)* | **Prod ALB DNS name** |
+| `CNAME` | `_xxx` (ACM) | AWS ACM Validation Target | AWS ACM Validation Target |
+
 
