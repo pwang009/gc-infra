@@ -4,14 +4,14 @@
 
 This plan details the implementation for building a new marketing website on **AWS Lightsail (WordPress)** while maintaining the existing live site on **GoDaddy** (`www.goodconnex.com`) during content migration. 
 
-**DNS Strategy**: GoDaddy remains the authoritative DNS provider for all phases initially. Subdomains (`wp.goodconnex.com`, `app-dev.goodconnex.com`, `api-dev.goodconnex.com`, and ACM validation CNAMEs) are created directly in GoDaddy DNS. Migration to **Amazon Route 53** is deferred to a later dedicated phase.
+**DNS Strategy**: GoDaddy remains the authoritative DNS provider for all phases initially. Subdomains (`wp.goodconnex.com`, `app.dev.goodconnex.com`, `api-dev.goodconnex.com`, and ACM validation CNAMEs) are created directly in GoDaddy DNS. Migration to **Amazon Route 53** is deferred to a later dedicated phase.
 
 ```mermaid
 flowchart TB
     subgraph Registrar["GoDaddy DNS (Authoritative for goodconnex.com)"]
         GD_WWW["www.goodconnex.com (A: Points to OLD Hosting during Phase 1-4)"]
         GD_WP["wp.goodconnex.com (A: Points to Lightsail Static IP)"]
-        GD_APP_DEV["app-dev.goodconnex.com (CNAME: Dev Beanstalk/ALB DNS)"]
+        GD_APP_DEV["app.dev.goodconnex.com (CNAME: React SPA CloudFront CDN)"]
         GD_API_DEV["api-dev.goodconnex.com (CNAME: Dev API ALB DNS)"]
         GD_ACM["_xxx.goodconnex.com (CNAME: ACM Certificate Validation)"]
     end
@@ -21,39 +21,37 @@ flowchart TB
     end
 
     subgraph Auth["AWS Cognito (Regional Service)"]
-        COG["Cognito User Pool<br/>- Allowed Callbacks: app-dev / app"]
+        COG["Cognito User Pool<br/>- Allowed Callbacks: app.dev / app"]
     end
 
     subgraph DevVPC["Dev VPC (10.100.0.0/24)"]
         ALB_DEV["Public ALB"]
-        EBS_APP_DEV["Beanstalk: App (Frontend)"]
-        EBS_API_DEV["Beanstalk: API (Backend)"]
+        S3_CF_DEV["S3 + CloudFront (03-app-v3)<br/>React SPA (app.dev.goodconnex.com)"]
+        EBS_API_DEV["Beanstalk / ASG: API (Backend)"]
         RDS_DEV[("Dev RDS / Redis")]
         
-        ALB_DEV --> EBS_APP_DEV
         ALB_DEV --> EBS_API_DEV
         EBS_API_DEV --> RDS_DEV
     end
 
     subgraph ProdVPC["Prod VPC (10.66.0.0/16 - Future)"]
         ALB_PROD["Public ALB"]
-        EBS_APP_PROD["Beanstalk: App (Frontend)"]
+        S3_CF_PROD["S3 + CloudFront<br/>React SPA (app.goodconnex.com)"]
         EBS_API_PROD["Beanstalk: API (Backend)"]
         RDS_PROD[("Prod Aurora / Redis")]
 
-        ALB_PROD --> EBS_APP_PROD
         ALB_PROD --> EBS_API_PROD
         EBS_API_PROD --> RDS_PROD
     end
 
     GD_WWW -->|"Keeps live site accessible"| OLD_HOST["Existing GoDaddy Website Host"]
     GD_WP -->|"New WP staging access"| WP
-    GD_APP_DEV --> ALB_DEV
+    GD_APP_DEV --> S3_CF_DEV
     GD_API_DEV --> ALB_DEV
 
-    WP -.->|"Login / CTA (Redirect to app-dev)"| EBS_APP_DEV
-    EBS_APP_DEV <--> COG
-    EBS_APP_PROD <--> COG
+    WP -.->|"Login / CTA (Redirect to app.dev)"| S3_CF_DEV
+    S3_CF_DEV <--> COG
+    S3_CF_PROD <--> COG
 ```
 
 ---
@@ -111,18 +109,19 @@ flowchart TB
 
 ---
 
-### Phase 3: Deploy Dev Dynamic Application (`app.dev.goodconnex.com`)
+### Phase 3: Deploy Dev Dynamic Application & SPA (`app.dev.goodconnex.com`)
 
 1. **Deploy Dev Infrastructure**:
    * Deploy Dev VPC using [tfvars/dev/01-network-dev.tfvars](tfvars/dev/01-network-dev.tfvars).
    * Deploy Dev Database (RDS & Redis) using [tfvars/dev/02-db-dev.tfvars](tfvars/dev/02-db-dev.tfvars).
-   * Deploy Dev API Beanstalk using `03-ebs-v1` (`api-dev.goodconnex.com`).
-   * Deploy/configure Dev App Beanstalk for dynamic web frontend (`app-dev.goodconnex.com`).
-2. **Attach ACM Certificate to Dev ALB**:
-   * Attach the issued ACM wildcard certificate to the Dev ALB HTTPS (443) listener.
+   * Deploy Dev API Beanstalk/ASG using `03-ebs-v1` (`api-dev.goodconnex.com`).
+   * Deploy Dev React/Vite SPA Infrastructure (S3 Bucket & CloudFront CDN) using [03-app-v3](03-app-v3) (`app.dev.goodconnex.com`).
+2. **Attach ACM Certificate**:
+   * Dev ALB (API): Wildcard certificate for `*.goodconnex.com` on HTTPS (443) listener.
+   * CloudFront CDN (SPA): `us-east-1` ACM certificate covering `app.dev.goodconnex.com` or `*.goodconnex.com`.
 3. **Add Subdomain CNAMEs in GoDaddy**:
-   * Type: `CNAME` | Host: `app-dev` | Value: `<Dev_ALB_DNS_Name>` (e.g., `awseb-e-xxx.us-west-2.elb.amazonaws.com`)
-   * Type: `CNAME` | Host: `api-dev` | Value: `<Dev_ALB_DNS_Name>`
+   * Type: `CNAME` | Host: `app.dev` | Value: `<CloudFront_Distribution_Domain>` (e.g., `d111111abcdef8.cloudfront.net`)
+   * Type: `CNAME` | Host: `api-dev` | Value: `<Dev_ALB_DNS_Name>` (e.g., `awseb-e-xxx.us-west-2.elb.amazonaws.com`)
 
 ---
 
@@ -133,16 +132,16 @@ flowchart TB
    * Create App Client with OAuth / OIDC enabled.
 2. **Configure Callback & Sign-Out URLs**:
    * Allowed Callback URLs:
-     * `https://app-dev.goodconnex.com/callback`
+     * `https://app.dev.goodconnex.com/callback`
      * `http://localhost:3000/callback` (for local development)
      * `https://app.goodconnex.com/callback` (pre-configured for production)
    * Allowed Sign-out URLs:
-     * `https://app-dev.goodconnex.com/login`
+     * `https://app.dev.goodconnex.com/login`
      * `https://wp.goodconnex.com` (during staging)
      * `https://www.goodconnex.com` (for production)
      * `https://app.goodconnex.com/login`
 3. **Scope Session Cookies**:
-   * Set authentication cookie domain to `.goodconnex.com` or `app-dev.goodconnex.com` with `Secure`, `HttpOnly`, and `SameSite=Lax`.
+   * Set authentication cookie domain to `.goodconnex.com` or `app.dev.goodconnex.com` with `Secure`, `HttpOnly`, and `SameSite=Lax`.
 
 ---
 
@@ -150,11 +149,11 @@ flowchart TB
 
 1. **Configurable Base URL Strategy**:
    * In Lightsail WordPress, define a single setting for the application base URL (e.g., via Theme Customizer or WP Options).
-   * Staging Value: `https://app-dev.goodconnex.com`
+   * Staging Value: `https://app.dev.goodconnex.com`
    * Future Production Value: `https://app.goodconnex.com`
 2. **Link CTA Buttons**:
    * Set navigation items and buttons (e.g., *Login*, *Get Started*, *Dashboard*) to point to `{APP_BASE_URL}/login` or `{APP_BASE_URL}/register`.
-   * **Security Rule**: WordPress never connects directly to RDS or holds database credentials. All dynamic operations flow through `app-dev.goodconnex.com` / `api-dev.goodconnex.com`.
+   * **Security Rule**: WordPress never connects directly to RDS or holds database credentials. All dynamic operations flow through `app.dev.goodconnex.com` / `api-dev.goodconnex.com`.
 
 ---
 
@@ -171,7 +170,7 @@ flowchart TB
    * Deploy Prod VPC (`10.66.0.0/16`) and database clusters (Aurora Multi-AZ, ElastiCache).
    * Deploy Prod Beanstalk environments for `app.goodconnex.com` and `api.goodconnex.com`.
    * In GoDaddy DNS, add:
-     * Type: `CNAME` | Host: `app` | Value: `<Prod_ALB_DNS_Name>`
+     * Type: `CNAME` | Host: `app` | Value: `<Prod_CloudFront_Domain_or_ALB>`
      * Type: `CNAME` | Host: `api` | Value: `<Prod_ALB_DNS_Name>`
 4. **Decommission Old GoDaddy Hosting**:
    * Once cutover is verified, cancel the old hosting package.
@@ -182,7 +181,7 @@ flowchart TB
 
 When you are ready to migrate authoritative DNS from GoDaddy to AWS Route 53:
 1. Create a Public Hosted Zone for `goodconnex.com` in Route 53.
-2. Replicate all active GoDaddy records (Apex, `www`, `wp`, `app`, `api`, `app-dev`, `api-dev`, MX, TXT).
+2. Replicate all active GoDaddy records (Apex, `www`, `wp`, `app`, `api`, `app.dev`, `api-dev`, MX, TXT).
 3. In GoDaddy DNS Management, change nameservers to the 4 AWS Route 53 NS servers.
 
 ---
@@ -194,10 +193,113 @@ When you are ready to migrate authoritative DNS from GoDaddy to AWS Route 53:
 | `A` | `www` | Existing GoDaddy Hosting IP | **Lightsail Static IP** |
 | `A` | `@` (Apex) | Existing GoDaddy Hosting IP / Forwarding | Forwarding to `https://www.goodconnex.com` |
 | `A` | `wp` | **Lightsail Static IP** | Lightsail Static IP (or removed) |
-| `CNAME` | `app-dev` | Dev ALB DNS name | Dev ALB DNS name |
+| `CNAME` | `app.dev` | **Dev CloudFront Domain** (`03-app-v3`) | **Dev CloudFront Domain** (`03-app-v3`) |
 | `CNAME` | `api-dev` | Dev ALB DNS name | Dev ALB DNS name |
-| `CNAME` | `app` | *(Not created yet)* | **Prod ALB DNS name** |
+| `CNAME` | `app` | *(Not created yet)* | **Prod CloudFront / ALB DNS name** |
 | `CNAME` | `api` | *(Not created yet)* | **Prod ALB DNS name** |
 | `CNAME` | `_xxx` (ACM) | AWS ACM Validation Target | AWS ACM Validation Target |
+
+---
+
+## 5. Vite SPA Frontend Deployment to S3 & CloudFront
+
+This guide explains how to build your local Vite Single Page Application (SPA), deploy the generated static assets to the AWS S3 bucket created in [03-app-v3/s3.tf](03-app-v3/s3.tf), and invalidate the CloudFront CDN cache configured in [03-app-v3/cloudfront.tf](03-app-v3/cloudfront.tf).
+
+### 5.1. Retrieve Infrastructure Outputs
+
+Obtain the target S3 bucket name and CloudFront distribution ID from Terraform outputs in [03-app-v3](03-app-v3):
+
+```bash
+cd 03-app-v3
+
+# Export variables for deployment
+export S3_BUCKET=$(terraform output -raw s3_bucket_name)
+export CDN_DIST_ID=$(terraform output -raw cloudfront_distribution_id)
+
+echo "Target Bucket: ${S3_BUCKET}"
+echo "Distribution ID: ${CDN_DIST_ID}"
+```
+
+---
+
+### 5.2. Build the Vite SPA Locally
+
+Navigate to your local frontend project directory, set up environment variables, and build the production bundle:
+
+```bash
+cd /path/to/your/vite-spa
+
+# 1. Install dependencies
+npm install
+
+# 2. Configure environment variables (e.g., .env.production)
+# VITE_API_BASE_URL=https://api-dev.goodconnex.com
+# VITE_COGNITO_USER_POOL_ID=<pool_id>
+# VITE_COGNITO_CLIENT_ID=<client_id>
+
+# 3. Create production build (generates 'dist/' directory)
+npm run build
+```
+
+---
+
+### 5.3. Push / Sync Build Artifacts to S3
+
+To ensure optimal caching performance, sync static assets (hashed JS/CSS/images) with long cache TTLs and sync `index.html` with `no-cache` so users instantly receive application updates:
+
+```bash
+# Step 1: Upload hashed assets with immutable long-term caching (1 year)
+if [ -d "dist/assets" ]; then
+  aws s3 sync dist/assets/ s3://${S3_BUCKET}/assets/ \
+    --cache-control "public, max-age=31536000, immutable" \
+    --delete
+fi
+
+# Step 2: Sync remaining files (including index.html) with no-cache headers
+aws s3 sync dist/ s3://${S3_BUCKET}/ \
+  --cache-control "no-cache, no-store, must-revalidate" \
+  --delete
+```
+
+> **Note**: The `--delete` flag removes obsolete assets from S3 that are no longer part of the latest build.
+
+---
+
+### 5.4. Invalidate CloudFront CDN Cache
+
+Trigger a CloudFront cache invalidation so edge locations immediately serve the new release:
+
+```bash
+# Invalidate all paths in CloudFront
+INVALIDATION_ID=$(aws cloudfront create-invalidation \
+  --distribution-id ${CDN_DIST_ID} \
+  --paths "/*" \
+  --query "Invalidation.Id" \
+  --output text)
+
+echo "Created invalidation: ${INVALIDATION_ID}"
+
+# Optional: Wait for the invalidation to complete across all edge locations
+aws cloudfront wait invalidation-completed \
+  --distribution-id ${CDN_DIST_ID} \
+  --id ${INVALIDATION_ID}
+
+echo "CloudFront invalidation complete!"
+```
+
+---
+
+### 5.5. Automated Deployment via Script
+
+Use the root-level deployment script [deploy-spa.sh](deploy-spa.sh) to automate building the Vite SPA, syncing assets to S3 with appropriate cache headers, and creating CloudFront cache invalidations in one command:
+
+```bash
+# Run from repository root:
+./deploy-spa.sh /path/to/vite-spa dev
+```
+
+The script automatically fetches `s3_bucket_name` and `cloudfront_distribution_id` from the [03-app-v3](03-app-v3) Terraform module outputs or uses `S3_BUCKET` and `CDN_DIST_ID` environment variables if exported.
+
+
 
 
