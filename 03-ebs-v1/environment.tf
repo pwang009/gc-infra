@@ -92,6 +92,33 @@ resource "aws_elastic_beanstalk_environment" "gc_api" {
     name      = "RetentionInDays"
     value     = "14"
   }
+
+  # AWS X-Ray daemon
+  setting {
+    namespace = "aws:elasticbeanstalk:xray"
+    name      = "XRayEnabled"
+    value     = "true"
+  }
+
+  # Enhanced health reporting (required for Immutable deployments)
+  setting {
+    namespace = "aws:elasticbeanstalk:healthreporting:system"
+    name      = "SystemType"
+    value     = "enhanced"
+  }
+
+  # Immutable deployment policy (Blue/Green in-place with zero downtime)
+  setting {
+    namespace = "aws:elasticbeanstalk:command"
+    name      = "DeploymentPolicy"
+    value     = "Immutable"
+  }
+  setting {
+    namespace = "aws:elasticbeanstalk:command"
+    name      = "Timeout"
+    value     = "600"
+  }
+
   tags = {
     Name = "gc-api-${var.environment}"
     Environment = var.environment

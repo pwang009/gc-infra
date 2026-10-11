@@ -30,6 +30,10 @@ resource "aws_cognito_user_pool" "main" {
     sns_caller_arn = aws_iam_role.cognito_sms.arn
   }
 
+  depends_on = [
+    aws_iam_role_policy.cognito_sms
+  ]
+
   tags = {
     Name        = "${var.environment}-user-pool"
     Environment = var.environment

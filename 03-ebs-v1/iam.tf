@@ -1,5 +1,5 @@
 resource "aws_iam_role" "eb_ec2_role" {
-  name = "aws-elasticbeanstalk-ec2-role"
+  name = "${var.environment}-aws-elasticbeanstalk-ec2-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -15,7 +15,7 @@ resource "aws_iam_role" "eb_ec2_role" {
   })
 
   tags = {
-    Name        = "aws-elasticbeanstalk-ec2-role"
+    Name        = "${var.environment}-aws-elasticbeanstalk-ec2-role"
     Environment = var.environment
     ManagedBy   = "terraform"
   }
@@ -41,6 +41,12 @@ resource "aws_iam_role_policy_attachment" "eb_ec2_cloudwatch_agent" {
 resource "aws_iam_role_policy_attachment" "eb_ec2_ssm_core" {
   role       = aws_iam_role.eb_ec2_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+# AWS X-Ray daemon write access
+resource "aws_iam_role_policy_attachment" "eb_ec2_xray" {
+  role       = aws_iam_role.eb_ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
 }
 
 resource "aws_iam_role_policy" "cognito_access" {
@@ -88,6 +94,6 @@ resource "aws_iam_role_policy" "cloudwatch_logs" {
 }
 
 resource "aws_iam_instance_profile" "eb_ec2_profile" {
-  name = "aws-elasticbeanstalk-ec2-role"
+  name = "${var.environment}-aws-elasticbeanstalk-ec2-role"
   role = aws_iam_role.eb_ec2_role.name
 }

@@ -18,7 +18,7 @@ resource "aws_iam_role" "cognito_sms" {
           "aws:SourceAccount" = data.aws_caller_identity.current.account_id
         }
         ArnLike = {
-          "aws:SourceArn" = "arn:aws:cognito-idp:${var.aws_region}:${data.aws_caller_identity.current.account_id}:userpool/${var.aws_region}_${var.environment}"
+          "aws:SourceArn" = "arn:aws:cognito-idp:${var.aws_region}:${data.aws_caller_identity.current.account_id}:userpool/*"
         }
       }
     }]
@@ -43,7 +43,7 @@ resource "aws_iam_role_policy" "cognito_sms" {
         Action = [
           "sns:Publish"
         ]
-        Resource = "arn:aws:sns:${var.aws_region}:${data.aws_caller_identity.current.account_id}:*"
+        Resource = "*"
       }
     ]
   })

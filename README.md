@@ -5,7 +5,8 @@ Complete infrastructure-as-code for a 3-tier REST API running on AWS with Elasti
 ## Quick Links
 
 - **[Architecture Overview](README.ARCHITECTURE.md)** — System design, components, and data flow
-- **[Deployment Guide](README.DEPLOYMENT.md)** — Step-by-step infrastructure setup
+- **[Infrastructure Deployment Guide](README.DEPLOYMENT.md)** — Step-by-step infrastructure setup
+- **[Code Deployment Guide](README.CODE.DEPLOYMENT.md)** — Python API Beanstalk deployment (Blue/Green)
 - **[Certificate & VPN Setup](README.CERTIFICATES.md)** — ACM certs, VPN configuration, DNS
 - **[Access & Connectivity](README.ACCESS.md)** — Bastion, SSM, port forwarding, database access
 - **[Operations](README.OPERATIONS.md)** — Monitoring, X-Ray, logs, scaling, troubleshooting

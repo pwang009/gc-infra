@@ -1,9 +1,9 @@
 resource "aws_s3_bucket" "alb_access_logs" {
-  bucket = "gc-alb-access-logs-${var.environment}"
+  bucket        = "gc-alb-access-logs-${var.environment}-${data.aws_caller_identity.current.account_id}"
   force_destroy = false
 
   tags = {
-    Name        = "gc-alb-access-logs"
+    Name        = "gc-alb-access-logs-${var.environment}-${data.aws_caller_identity.current.account_id}"
     Environment = var.environment
     ManagedBy   = "terraform"
   }

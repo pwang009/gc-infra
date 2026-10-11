@@ -12,6 +12,10 @@ resource "aws_lb" "app" {
     enabled = true
   }
 
+  depends_on = [
+    aws_s3_bucket_policy.alb_access_logs_policy
+  ]
+
   tags = {
     Name        = "${var.environment}-app-alb"
     Environment = var.environment
@@ -73,7 +77,7 @@ resource "aws_lb_listener" "https" {
   }
 }
 
-resource "aws_lb_listener_rule" "v1_path" {
+resource "aws_lb_listener_rule" "api_routes" {
   listener_arn = aws_lb_listener.https.arn
   priority     = 100
 
@@ -84,7 +88,7 @@ resource "aws_lb_listener_rule" "v1_path" {
 
   condition {
     path_pattern {
-      values = ["/v1/*"]
+      values = ["/v1/*", "/v2/*"]
     }
   }
 }

@@ -21,3 +21,9 @@ variable "deployment_bucket_name" {
   type        = string
   default     = "gc-app-deployments-c8f7ewhysy5w"
 }
+
+variable "web_bucket_name" {
+  description = "S3 bucket used for gc-web static hosting"
+  type        = string
+  default     = "gc-app-dev-339087217430"
+}

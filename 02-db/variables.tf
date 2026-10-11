@@ -41,6 +41,12 @@ variable "db_password" {
   sensitive   = true
 }
 
+variable "aurora_engine_version" {
+  description = "Aurora PostgreSQL engine version"
+  type        = string
+  default     = "16.8"
+}
+
 variable "instance_class" {
   description = "Instance class for provisioned Aurora instances"
   type        = string

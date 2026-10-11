@@ -20,7 +20,7 @@ resource "aws_rds_cluster" "aurora" {
   cluster_identifier              = "${var.environment}-aurora-cluster"
   engine                          = "aurora-postgresql"
   engine_mode                     = local.serverless_mode ? "provisioned" : "provisioned"
-  engine_version                  = "16.4"
+  engine_version                  = var.aurora_engine_version
   database_name                   = var.db_name
   master_username                 = var.db_username
   master_password                 = var.db_password

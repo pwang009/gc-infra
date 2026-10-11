@@ -55,6 +55,41 @@ resource "aws_iam_user_policy" "github_deployer" {
   })
 }
 
+resource "aws_iam_user_policy" "github_deployer_web" {
+  name = "github-deployer-web-policy"
+  user = aws_iam_user.github_deployer.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "WebBucketAccess"
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket",
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject"
+        ]
+        Resource = [
+          "arn:aws:s3:::${var.web_bucket_name}",
+          "arn:aws:s3:::${var.web_bucket_name}/*"
+        ]
+      },
+      {
+        Sid    = "CloudFrontInvalidation"
+        Effect = "Allow"
+        Action = [
+          "cloudfront:CreateInvalidation",
+          "cloudfront:GetInvalidation",
+          "cloudfront:ListInvalidations"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 resource "aws_iam_access_key" "github_deployer" {
   user = aws_iam_user.github_deployer.name
 }
