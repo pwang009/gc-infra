@@ -14,6 +14,48 @@ This guide describes how to deploy application code to AWS Elastic Beanstalk (`g
 * **Region:** `us-west-2`
 * **Deployment Policy:** `Immutable` (automated Blue/Green instance rotation with zero downtime and automatic rollback)
 
+```
+                         ┌──────────────────────────┐
+                         │        Developer         │
+                         │        pushes code       │
+                         └─────────────┬────────────┘
+                                       │
+                                       ▼
+                         ┌──────────────────────────┐
+                         │   GitHub / Local Build   │
+                         │  - lint & test suite     │
+                         │  - create deployment zip │
+                         │  - upload to S3 bucket   │
+                         └─────────────┬────────────┘
+                                       │
+                                       ▼
+                         ┌──────────────────────────┐
+                         │   AWS S3 Versions Store  │
+                         │  (Versioned zip bundles) │
+                         └─────────────┬────────────┘
+                                       │
+                                       ▼
+                         ┌──────────────────────────┐
+                         │ Create App Version &     │
+                         │ Trigger Deployment       │
+                         └─────────────┬────────────┘
+                                       │
+                     ┌─────────────────┴─────────────────┐
+                     ▼                                   ▼
+       ┌──────────────────────────┐        ┌──────────────────────────┐
+       │ Elastic Beanstalk (Dev)  │        │ Elastic Beanstalk (Prod) │
+       │  - Immutable Blue/Green  │        │  - Immutable Blue/Green  │
+       │  - Auto Scaling Group    │        │  - Auto Scaling Group    │
+       │  - Health Check /health  │        │  - Health Check /health  │
+       └──────────────────────────┘        └─────────────┬────────────┘
+                                                         │
+                                                         ▼
+                                           ┌──────────────────────────┐
+                                           │   ALB (Public Subnets)   │
+                                           │   Routes traffic to Prod │
+                                           └──────────────────────────┘
+```
+
 ---
 
 ## 1. Prerequisites
