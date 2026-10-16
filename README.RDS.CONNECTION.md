@@ -271,3 +271,85 @@ echo "👉 Paste the token into the Password field in DBeaver and connect within
    ./get-db-token.sh
    ```
 3. Switch to DBeaver, press `Ctrl+V` (or `Cmd+V` on macOS) in the Password field, and connect.
+
+---
+
+## Part 4: How to Fetch Connection Parameters (CLI & Terraform Reference)
+
+When setting up your connections or replacing documentation placeholders, use these CLI or Terraform commands to quickly retrieve live infrastructure values:
+
+### 1. AWS CLI Commands (Region: `us-west-2`)
+
+- **AWS Account ID (`<aws_account_id>`)**:
+  ```bash
+  aws sts get-caller-identity --query "Account" --output text
+  ```
+
+- **Aurora Cluster Writer Endpoint (`<aurora-cluster-endpoint>`)**:
+  ```bash
+  aws rds describe-db-clusters \
+    --region us-west-2 \
+    --query "DBClusters[?contains(DBClusterIdentifier, 'prod')].Endpoint" \
+    --output text
+  ```
+
+- **RDS Proxy Endpoint (`<db-proxy-endpoint>`)**:
+  ```bash
+  aws rds describe-db-proxies \
+    --region us-west-2 \
+    --query "DBProxies[?contains(DBProxyName, 'prod')].Endpoint" \
+    --output text
+  ```
+
+- **Database Name (`<dbname>`)**:
+  ```bash
+  aws rds describe-db-clusters \
+    --region us-west-2 \
+    --query "DBClusters[?contains(DBClusterIdentifier, 'prod')].DatabaseName" \
+    --output text
+  ```
+
+- **Cluster Resource ID (`<db_cluster_resource_id>`)**:
+  ```bash
+  aws rds describe-db-clusters \
+    --region us-west-2 \
+    --query "DBClusters[?contains(DBClusterIdentifier, 'prod')].DbClusterResourceId" \
+    --output text
+  ```
+
+---
+
+### 2. Terraform CLI & State File Commands
+
+- **From `02-db` Directory**:
+  ```bash
+  # Cluster Writer Endpoint
+  terraform -chdir=02-db output -raw cluster_endpoint
+
+  # Proxy Endpoint
+  terraform -chdir=02-db output -raw proxy_endpoint
+
+  # Recommended Connection Endpoint (Proxy if enabled, otherwise Cluster)
+  terraform -chdir=02-db output -raw connection_endpoint
+
+  # Database Name
+  terraform -chdir=02-db output -raw database_name
+  ```
+
+- **Directly from S3 Remote State (No `terraform init` required)**:
+  ```bash
+  aws s3 cp s3://gc-terraform-state-c8f7ewhysy5v/prod/02-db/terraform.tfstate - | jq '.outputs'
+  ```
+
+---
+
+### 3. Generate DBeaver IAM Token in One Command
+
+```bash
+aws rds generate-db-auth-token \
+  --hostname "$(aws rds describe-db-clusters --region us-west-2 --query "DBClusters[?contains(DBClusterIdentifier, 'prod')].Endpoint" --output text)" \
+  --port 5432 \
+  --username "<dbuser>" \
+  --region us-west-2
+```
+
