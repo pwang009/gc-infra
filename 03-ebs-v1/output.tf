@@ -11,6 +11,9 @@ output "beanstalk_asg_names" {
 output "beanstalk_env_name" {
   value = aws_elastic_beanstalk_environment.gc_api.name
 }
+output "beanstalk_app_name" {
+  value = aws_elastic_beanstalk_application.gc_api.name
+}
 
 
 # The ASG name is not directly exported by aws_elastic_beanstalk_environment.

@@ -58,7 +58,7 @@ resource "aws_elastic_beanstalk_environment" "gc_api" {
     name      = "HealthCheckPath"
     value     = "/health"
   }
-    # Set PORT environment variable for Python app
+  # Set PORT environment variable for Python app
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
     name      = "PORT"
@@ -120,7 +120,7 @@ resource "aws_elastic_beanstalk_environment" "gc_api" {
   }
 
   tags = {
-    Name = "gc-api-${var.environment}"
+    Name        = "gc-api-${var.environment}"
     Environment = var.environment
   }
 }
