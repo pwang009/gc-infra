@@ -76,7 +76,7 @@ if [ -n "$TARGET_MODULE" ]; then
 else
   # Note: 08-cognito should come before 03-ebs-v1 because the Beanstalk role policy
   # references the Cognito user pool ARN from the Cognito stack.
-  MODULES=(01-network 02-db 03-bastion 08-cognito 03-ebs-v1 04-alb 05-ssm-access 07-cicd)
+  MODULES=(01-network 02-db 03-bastion 08-cognito 03-ebs-v1 04-alb 05-ssm-access 07-cicd 10-s3 15-ebs-conf)
 fi
 
 for DIR in "${MODULES[@]}"; do
